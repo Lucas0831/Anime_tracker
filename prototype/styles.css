@@ -107,7 +107,7 @@ img { display: block; }
 .app-header h1 {
   margin: 0;
   font-size: 19px;
-  font-weight: 600;
+  font-weight: 400;
   letter-spacing: 0.03em;
   color: #17171a;
 }
@@ -767,6 +767,8 @@ img { display: block; }
   font-weight: 600;
 }
 .origin-badge .ico { width: 15px; height: 15px; stroke-width: 1.6; }
+.origin-badge.origin-manga { background: #f2ebff; color: #7b5cc8; }
+.origin-badge.origin-original { background: #ffe9f0; color: #d8608c; }
 .info-table { display: flex; flex-direction: column; gap: 15px; margin: 0; }
 .info-row {
   display: grid;

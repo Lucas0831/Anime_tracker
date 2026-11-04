@@ -86,15 +86,15 @@
 
   function header() {
     var modes = {
-      timeline: { icon: 'i-timeline', label: '切换到列表视图' },
-      list: { icon: 'i-grid', label: '切换到网格视图' },
-      grid: { icon: 'i-calendar7', label: '切换到时间线视图' }
+      timeline: { icon: 'i-timeline', label: '切换到列表视图', title: '番剧时间轴' },
+      list: { icon: 'i-grid', label: '切换到网格视图', title: '番剧列表' },
+      grid: { icon: 'i-calendar7', label: '切换到时间线视图', title: '番剧网格' }
     };
     var m = modes[state.view] || modes.timeline;
     return '' +
       '<header class="app-header">' +
         '<button class="icon-btn" data-action="switch" aria-label="' + m.label + '" title="' + m.label + '">' + icon(m.icon) + '</button>' +
-        '<h1>番剧时间表</h1>' +
+        '<h1>' + m.title + '</h1>' +
         '<button class="icon-btn" data-action="open-search" aria-label="搜索番剧" title="搜索番剧">' + icon('i-search') + '</button>' +
       '</header>';
   }
@@ -285,10 +285,10 @@
     '</div>';
   }
 
-  function originLabel(a) {
-    if (a.tags.indexOf('漫画改') > -1 || a.tags.indexOf('漫改') > -1) return '漫画改编';
-    if (a.tags.indexOf('轻改') > -1) return '轻小说改编';
-    return '原创动画';
+  function originInfo(a) {
+    if (a.tags.indexOf('漫画改') > -1 || a.tags.indexOf('漫改') > -1) return { label: '漫画改编', cls: 'origin-manga' };
+    if (a.tags.indexOf('轻改') > -1) return { label: '轻小说改编', cls: 'origin-novel' };
+    return { label: '原创动画', cls: 'origin-original' };
   }
 
   function renderDetail() {
@@ -305,6 +305,7 @@
       ['类型', a.genres.join(' / ')],
       ['放送时段', window.WEEK[a.day].label + ' ' + a.time]
     ];
+    var origin = originInfo(a);
     var actionBtns = [
       { ico: 'i-info', action: 'scroll-info', label: '作品信息', active: true },
       { ico: 'i-users', action: 'demo', label: '角色列表', msg: '角色列表为演示占位，未接入真实数据' },
@@ -339,7 +340,7 @@
 
       '<section class="detail-section" id="detail-info">' +
         '<h2>信息</h2>' +
-        '<div class="origin-badge">' + icon('i-book') + originLabel(a) + '</div>' +
+        '<div class="origin-badge ' + origin.cls + '">' + icon('i-book') + origin.label + '</div>' +
         '<dl class="info-table">' + rows.map(function (r) {
           return '<div class="info-row"><dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd></div>';
         }).join('') + '</dl>' +
@@ -386,7 +387,7 @@
     var a = byId(state.detailId);
     document.title = state.view === 'detail' && a ? '追番助手 · ' + a.title
       : state.view === 'search' ? '追番助手 · 搜索'
-      : '追番助手 · 番剧时间表';
+      : '追番助手 · ' + ({ timeline: '番剧时间轴', list: '番剧列表', grid: '番剧网格' })[state.view];
   }
 
   function renderAndTop() {
