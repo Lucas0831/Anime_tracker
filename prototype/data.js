@@ -287,4 +287,4 @@ window.ANIME = [
   }
 ];
 
-window.HOT_KEYWORDS = ['女友的朋友', '成也萧何', '天是红河岸', '国创', '恋爱', '雪女'];
+window.SEARCH_HISTORY = ['女友的朋友', '国创', '成也萧何', '天地无用'];

@@ -12,14 +12,13 @@
     detailId: 'tenchi',
     returnTo: 'timeline',
     tagsOpen: false,
-    followed: new Set()
+    history: (window.SEARCH_HISTORY || []).slice()
   };
 
   var FILTERS = [
     { key: 'all', label: '全部' },
     { key: 'anime', label: '番剧' },
-    { key: 'guochuang', label: '国创' },
-    { key: 'followed', label: '已追' }
+    { key: 'guochuang', label: '国创' }
   ];
 
   function esc(v) {
@@ -34,23 +33,17 @@
     calendar7: '<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 9.5h17M13.2 12.4l-2 5M11.2 14h3.6"/>',
     search: '<circle cx="10.8" cy="10.8" r="6.6"/><path d="M15.6 15.6L20 20"/>',
     back: '<path d="M14.5 5L7.5 12l7 7M7.8 12H20"/>',
-    heart: '<path d="M12 20.2s-7.7-4.6-7.7-10.1A4.4 4.4 0 0 1 12 7.2a4.4 4.4 0 0 1 7.7 2.9c0 5.5-7.7 10.1-7.7 10.1z"/>',
-    share: '<circle cx="18" cy="5.5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="18.5" r="2.6"/><path d="M8.3 10.7l7.4-3.9M8.3 13.3l7.4 3.9"/>',
-    bookmark: '<path d="M6.5 4.5h11a1 1 0 0 1 1 1V21l-6.5-4.2L5.5 21V5.5a1 1 0 0 1 1-1z"/>',
     clock: '<circle cx="12" cy="12" r="8.3"/><path d="M12 7.7V12l2.9 1.8"/>',
     broadcast: '<circle cx="12" cy="12" r="1.7"/><path d="M8.4 8.6a5 5 0 0 0 0 6.8M15.6 8.6a5 5 0 0 1 0 6.8M5.7 5.9a8.5 8.5 0 0 0 0 12.2M18.3 5.9a8.5 8.5 0 0 1 0 12.2"/>',
     globe: '<circle cx="12" cy="12" r="8.3"/><path d="M3.7 12h16.6M12 3.7c2.5 2.6 3.7 5.4 3.7 8.3S14.5 17.7 12 20.3c-2.5-2.6-3.7-5.4-3.7-8.3S9.5 6.3 12 3.7z"/>',
     users: '<circle cx="9" cy="8.5" r="3"/><path d="M3.5 19c.5-3.2 2.6-5 5.5-5s5 1.8 5.5 5"/><path d="M15.2 5.9a3 3 0 0 1 0 5.4M16.8 14.2c2.1.4 3.4 2 3.7 4.3"/>',
     shuffle: '<path d="M4 7h3.2c1.5 0 2.4.7 3.2 1.9l3.2 6.2c.8 1.2 1.7 1.9 3.2 1.9H20"/><path d="M17.5 14.7L20 17l-2.5 2.3M4 17h3.2c1.1 0 1.9-.4 2.6-1.2M14.3 8.2c.7-.8 1.5-1.2 2.5-1.2H20M17.5 4.7L20 7l-2.5 2.3"/>',
-    play: '<path d="M8 5.4l10 6.6-10 6.6z"/>',
-    message: '<path d="M4.5 5.5h15v10.3h-8.2L7 19.3v-3.5H4.5z"/>',
     info: '<circle cx="12" cy="12" r="8.3"/><path d="M12 11v5.2M12 7.8v.2"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
     arrowUp: '<path d="M12 19V5M6.5 10.5L12 5l5.5 5.5"/>',
     book: '<path d="M4.5 5.5c2.4-.8 4.6-.3 7.5 1.2v12c-2.9-1.5-5.1-2-7.5-1.2zM19.5 5.5c-2.4-.8-4.6-.3-7.5 1.2v12c2.9-1.5 5.1-2 7.5-1.2z"/>',
     calendarX: '<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 9.5h17M9.5 13.5l5 4M14.5 13.5l-5 4"/>',
-    x: '<path d="M5.5 5.5l13 13M18.5 5.5l-13 13"/>',
-    check: '<path d="M4.5 12.5l5 5 10-11"/>'
+    x: '<path d="M5.5 5.5l13 13M18.5 5.5l-13 13"/>'
   };
 
   var ICON_ALIASES = { 'calendar-x': 'calendarX', 'arrow-up': 'arrowUp' };
@@ -68,7 +61,6 @@
   function passes(a) {
     if (state.filter === 'anime') return a.category === 'anime';
     if (state.filter === 'guochuang') return a.category === 'guochuang';
-    if (state.filter === 'followed') return state.followed.has(a.id);
     return true;
   }
 
@@ -138,26 +130,17 @@
 
   function emptyState(kind) {
     var c = {
-      followed: { icon: 'i-heart', title: '还没有追番', sub: '在时间线点击爱心，或进入详情页收藏追番' },
       day: { icon: 'i-calendar-x', title: '这一天没有番剧', sub: '试试切换其他日期看看' },
       filter: { icon: 'i-calendar-x', title: '没有符合条件的番剧', sub: '换一个筛选条件试试' },
-      search: { icon: 'i-search', title: '没有找到相关番剧', sub: '换个关键词，或看看下面的热门搜索' }
+      search: { icon: 'i-search', title: '没有找到相关番剧', sub: '换个关键词再试试' }
     }[kind] || {};
-    var action = kind === 'filter' || kind === 'followed'
+    var action = kind === 'filter'
       ? '<button class="empty-action" data-action="reset-filter">查看全部</button>'
       : '';
     return '<div class="empty-state">' +
       '<div class="empty-ico">' + icon(c.icon) + '</div>' +
       '<h3>' + c.title + '</h3><p>' + c.sub + '</p>' + action +
     '</div>';
-  }
-
-  function followButton(a) {
-    var on = state.followed.has(a.id);
-    return '<button class="follow' + (on ? ' followed' : '') + '" data-action="follow" data-id="' + a.id + '" aria-pressed="' + on + '">' +
-      '<span class="follow-ico">' + icon('i-heart', 'heart-ico') + (on ? icon('i-check', 'follow-badge') : icon('i-plus', 'follow-badge')) + '</span>' +
-      '<span>' + (on ? '已追' : '追番') + '</span>' +
-    '</button>';
   }
 
   function timelineItem(a) {
@@ -168,7 +151,6 @@
         '<p class="tl-ep">第' + a.ep + '话</p>' +
         '<div class="tl-tags">' + a.tags.slice(0, 2).map(function (t) { return '<span class="tag-outline">' + esc(t) + '</span>'; }).join('') + '</div>' +
       '</div>' +
-      followButton(a) +
     '</article>';
   }
 
@@ -191,7 +173,7 @@
     var items = showsForDay(state.day);
     var body = items.length
       ? timelineGroups(items)
-      : emptyState(state.filter === 'followed' ? 'followed' : (state.filter === 'all' ? 'day' : 'filter'));
+      : emptyState(state.filter === 'all' ? 'day' : 'filter');
     return '<div class="page page-timeline">' + header() + weekStrip() + dayBar() +
       '<div class="timeline-wrap' + (items.length ? '' : ' is-empty') + '">' + body + '</div><div class="page-pad"></div></div>';
   }
@@ -216,7 +198,7 @@
     var items = showsForDay(state.day);
     var body = items.length
       ? items.map(listCard).join('')
-      : emptyState(state.filter === 'followed' ? 'followed' : (state.filter === 'all' ? 'day' : 'filter'));
+      : emptyState(state.filter === 'all' ? 'day' : 'filter');
     return '<div class="page page-list">' + header() + weekChips() +
       '<div class="list-body-wrap">' + body + '</div><div class="page-pad"></div></div>';
   }
@@ -233,7 +215,7 @@
     var items = showsForDay(state.day);
     var body = items.length
       ? '<div class="grid-wrap">' + items.map(gridCard).join('') + '</div>'
-      : emptyState(state.filter === 'followed' ? 'followed' : (state.filter === 'all' ? 'day' : 'filter'));
+      : emptyState(state.filter === 'all' ? 'day' : 'filter');
     return '<div class="page page-grid">' + header() + weekChips() +
       '<div class="grid-body">' + body + '</div><div class="page-pad"></div></div>';
   }
@@ -256,21 +238,30 @@
     '</article>';
   }
 
+  function historyHTML() {
+    var items = state.history;
+    return '<section class="search-section">' +
+        '<div class="section-head">' +
+          '<h2 class="section-title">搜索历史</h2>' +
+          (items.length ? '<button class="section-action" data-action="clear-history">清空</button>' : '') +
+        '</div>' +
+        (items.length
+          ? '<div class="history-tags">' + items.map(function (k) {
+              return '<button class="history-tag" data-action="keyword" data-q="' + esc(k) + '">' + esc(k) + '</button>';
+            }).join('') + '</div>'
+          : '<p class="history-empty">暂无搜索记录</p>') +
+      '</section>';
+  }
+
+  function rememberQuery(q) {
+    q = String(q || '').trim();
+    if (!q) return;
+    state.history = [q].concat(state.history.filter(function (h) { return h !== q; })).slice(0, 8);
+  }
+
   function searchResultsHTML() {
     var q = state.q.trim().toLowerCase();
-    if (!q) {
-      var hot = window.ANIME.slice().sort(function (a, b) { return b.ratings[0] - a.ratings[0]; }).slice(0, 6);
-      return '<section class="search-section">' +
-          '<h2 class="section-title">热门搜索</h2>' +
-          '<div class="hot-tags">' + window.HOT_KEYWORDS.map(function (k) {
-            return '<button class="hot-tag" data-action="keyword" data-q="' + esc(k) + '">' + esc(k) + '</button>';
-          }).join('') + '</div>' +
-        '</section>' +
-        '<section class="search-section">' +
-          '<h2 class="section-title">本周热门</h2>' +
-          '<div class="search-list">' + hot.map(searchRow).join('') + '</div>' +
-        '</section>';
-    }
+    if (!q) return historyHTML();
     var results = window.ANIME.filter(function (a) {
       var pool = [a.title, a.jp, a.studio, a.season, a.category === 'guochuang' ? '国创 国漫' : '番剧'].concat(a.tags, a.extraTags || [], a.genres).join(' ').toLowerCase();
       return pool.indexOf(q) > -1;
@@ -304,7 +295,6 @@
     var a = byId(state.detailId) || byId('tenchi');
     var allTags = a.tags.concat(a.extraTags || []);
     var visibleTags = state.tagsOpen ? allTags : allTags.slice(0, 6);
-    var followed = state.followed.has(a.id);
     var next = a.next;
     var ratingLabels = ['MAL评分', 'Bangumi评分', 'AS评分', 'TMDB评分'];
     var rows = [
@@ -318,19 +308,13 @@
     var actionBtns = [
       { ico: 'i-info', action: 'scroll-info', label: '作品信息', active: true },
       { ico: 'i-users', action: 'demo', label: '角色列表', msg: '角色列表为演示占位，未接入真实数据' },
-      { ico: 'i-shuffle', action: 'demo', label: '相关推荐', msg: '相关推荐为演示占位，未接入真实数据' },
-      { ico: 'i-play', action: 'demo', label: '在线播放', msg: '原型不接入视频播放能力' },
-      { ico: 'i-message', action: 'demo', label: '讨论区', msg: '原型不接入社区与评论能力' }
+      { ico: 'i-shuffle', action: 'demo', label: '相关推荐', msg: '相关推荐为演示占位，未接入真实数据' }
     ];
     return '<div class="page page-detail">' +
       '<div class="detail-hero">' +
         '<div class="hero-blur" style="background-image:url(\'' + esc(a.poster) + '\')"></div>' +
         '<div class="detail-topbar">' +
           '<button class="round-back" data-action="back" aria-label="返回">' + icon('i-back') + '</button>' +
-          '<div class="top-actions">' +
-            '<button class="plain-btn' + (followed ? ' on' : '') + '" data-action="bookmark" data-id="' + a.id + '" aria-label="' + (followed ? '已追番' : '追番') + '" aria-pressed="' + followed + '">' + icon('i-bookmark') + '</button>' +
-            '<button class="plain-btn" data-action="share" aria-label="分享">' + icon('i-share') + '</button>' +
-          '</div>' +
         '</div>' +
         '<div class="hero-main">' +
           '<img class="detail-poster" src="' + esc(a.poster) + '" alt="' + esc(a.title) + ' 海报">' +
@@ -373,20 +357,6 @@
         '</div>' +
       '</section>' +
 
-      '<section class="detail-section">' +
-        '<h2>在线播出平台</h2>' +
-        '<div class="pill-row">' + a.platforms.map(function (p) {
-          return '<button class="outline-pill link" data-action="demo" data-msg="原型不跳转外部平台">' + esc(p) + '</button>';
-        }).join('') + '</div>' +
-      '</section>' +
-
-      '<section class="detail-section">' +
-        '<h2>外部链接</h2>' +
-        '<div class="pill-row">' + ['MAL', 'Bangumi', 'AnimeSchedule'].map(function (p) {
-          return '<button class="outline-pill link" data-action="demo" data-msg="原型不跳转外部链接">' + p + '</button>';
-        }).join('') + '</div>' +
-      '</section>' +
-
       '<div class="page-pad"></div>' +
       '<button class="to-top" data-action="top" aria-label="回到顶部">' + icon('i-arrow-up') + '</button>' +
     '</div>';
@@ -404,28 +374,6 @@
     var input = document.getElementById('search-input');
     if (input) input.value = q;
     updateSearchResults();
-  }
-
-  function toggleFollow(id) {
-    var a = byId(id);
-    if (!a) return;
-    var on = state.followed.has(id);
-    if (on) state.followed.delete(id); else state.followed.add(id);
-    showToast((on ? '已取消追番：' : '已追番：') + a.title);
-    renderKeepScroll();
-  }
-
-  function doShare() {
-    var url = location.href;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(function () {
-        showToast('分享链接已复制（演示）');
-      }).catch(function () {
-        showToast('分享能力为原型占位');
-      });
-    } else {
-      showToast('分享能力为原型占位');
-    }
   }
 
   function render() {
@@ -517,10 +465,8 @@
     var id = target.getAttribute('data-id');
 
     if (action === 'open') {
+      if (state.view === 'search' && state.q.trim()) rememberQuery(state.q);
       navigate('detail', { id: id });
-    } else if (action === 'follow') {
-      e.preventDefault();
-      toggleFollow(id);
     } else if (action === 'switch') {
       switchView();
     } else if (action === 'open-search') {
@@ -542,10 +488,9 @@
       applyKeyword('');
       var input = document.getElementById('search-input');
       if (input) input.focus();
-    } else if (action === 'bookmark') {
-      toggleFollow(id);
-    } else if (action === 'share') {
-      doShare();
+    } else if (action === 'clear-history') {
+      state.history = [];
+      updateSearchResults();
     } else if (action === 'expand-tags') {
       state.tagsOpen = !state.tagsOpen;
       renderKeepScroll();
@@ -567,6 +512,14 @@
   });
 
   viewport.addEventListener('keydown', function (e) {
+    if (e.target && e.target.id === 'search-input') {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        rememberQuery(state.q);
+        e.target.blur();
+      }
+      return;
+    }
     if (e.key === 'Enter' || e.key === ' ') {
       var target = e.target.closest('[role="button"][data-action="open"]');
       if (target && !e.target.closest('button')) {
