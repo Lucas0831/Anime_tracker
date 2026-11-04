@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>追番助手 · 可点击原型</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="stage">
+    <div class="device" id="device">
+      <div class="viewport" id="viewport"></div>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </div>
+    <p class="desktop-hint">静态可点击原型 · 左上角图标切换视图 · 点击番剧卡片查看详情</p>
+  </div>
+
+  <svg class="svg-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-timeline" viewBox="0 0 24 24">
+      <circle cx="4.5" cy="6.5" r="1.4"/><circle cx="4.5" cy="12" r="1.4"/><circle cx="4.5" cy="17.5" r="1.4"/>
+      <path d="M9 6.5h11M9 12h11M9 17.5h11"/>
+    </symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24">
+      <rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/>
+      <rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>
+    </symbol>
+    <symbol id="i-calendar7" viewBox="0 0 24 24">
+      <rect x="3.5" y="5" width="17" height="15.5" rx="3"/>
+      <path d="M8 3v4M16 3v4M3.5 9.5h17M13.2 12.4l-2 5M11.2 14h3.6"/>
+    </symbol>
+    <symbol id="i-search" viewBox="0 0 24 24">
+      <circle cx="10.8" cy="10.8" r="6.6"/><path d="M15.6 15.6L20 20"/>
+    </symbol>
+    <symbol id="i-back" viewBox="0 0 24 24">
+      <path d="M14.5 5L7.5 12l7 7M7.8 12H20"/>
+    </symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24">
+      <path d="M12 20.2s-7.7-4.6-7.7-10.1A4.4 4.4 0 0 1 12 7.2a4.4 4.4 0 0 1 7.7 2.9c0 5.5-7.7 10.1-7.7 10.1z"/>
+    </symbol>
+    <symbol id="i-share" viewBox="0 0 24 24">
+      <circle cx="18" cy="5.5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="18.5" r="2.6"/>
+      <path d="M8.3 10.7l7.4-3.9M8.3 13.3l7.4 3.9"/>
+    </symbol>
+    <symbol id="i-bookmark" viewBox="0 0 24 24">
+      <path d="M6.5 4.5h11a1 1 0 0 1 1 1V21l-6.5-4.2L5.5 21V5.5a1 1 0 0 1 1-1z"/>
+    </symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.3"/><path d="M12 7.7V12l2.9 1.8"/>
+    </symbol>
+    <symbol id="i-broadcast" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="1.7"/><path d="M8.4 8.6a5 5 0 0 0 0 6.8M15.6 8.6a5 5 0 0 1 0 6.8M5.7 5.9a8.5 8.5 0 0 0 0 12.2M18.3 5.9a8.5 8.5 0 0 1 0 12.2"/>
+    </symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.3"/><path d="M3.7 12h16.6M12 3.7c2.5 2.6 3.7 5.4 3.7 8.3S14.5 17.7 12 20.3c-2.5-2.6-3.7-5.4-3.7-8.3S9.5 6.3 12 3.7z"/>
+    </symbol>
+    <symbol id="i-users" viewBox="0 0 24 24">
+      <circle cx="9" cy="8.5" r="3"/><path d="M3.5 19c.5-3.2 2.6-5 5.5-5s5 1.8 5.5 5"/>
+      <path d="M15.2 5.9a3 3 0 0 1 0 5.4M16.8 14.2c2.1.4 3.4 2 3.7 4.3"/>
+    </symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24">
+      <path d="M4 7h3.2c1.5 0 2.4.7 3.2 1.9l3.2 6.2c.8 1.2 1.7 1.9 3.2 1.9H20"/>
+      <path d="M17.5 14.7L20 17l-2.5 2.3M4 17h3.2c1.1 0 1.9-.4 2.6-1.2M14.3 8.2c.7-.8 1.5-1.2 2.5-1.2H20M17.5 4.7L20 7l-2.5 2.3"/>
+    </symbol>
+    <symbol id="i-play" viewBox="0 0 24 24">
+      <path d="M8 5.4l10 6.6-10 6.6z"/>
+    </symbol>
+    <symbol id="i-message" viewBox="0 0 24 24">
+      <path d="M4.5 5.5h15v10.3h-8.2L7 19.3v-3.5H4.5z"/>
+    </symbol>
+    <symbol id="i-info" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.3"/><path d="M12 11v5.2M12 7.8v.2"/>
+    </symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24">
+      <path d="M12 5v14M5 12h14"/>
+    </symbol>
+    <symbol id="i-arrow-up" viewBox="0 0 24 24">
+      <path d="M12 19V5M6.5 10.5L12 5l5.5 5.5"/>
+    </symbol>
+    <symbol id="i-book" viewBox="0 0 24 24">
+      <path d="M4.5 5.5c2.4-.8 4.6-.3 7.5 1.2v12c-2.9-1.5-5.1-2-7.5-1.2zM19.5 5.5c-2.4-.8-4.6-.3-7.5 1.2v12c2.9-1.5 5.1-2 7.5-1.2z"/>
+    </symbol>
+    <symbol id="i-calendar-x" viewBox="0 0 24 24">
+      <rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 9.5h17M9.5 13.5l5 4M14.5 13.5l-5 4"/>
+    </symbol>
+    <symbol id="i-x" viewBox="0 0 24 24">
+      <path d="M5.5 5.5l13 13M18.5 5.5l-13 13"/>
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24">
+      <path d="M4.5 12.5l5 5 10-11"/>
+    </symbol>
+  </svg>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

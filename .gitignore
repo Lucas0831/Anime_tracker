@@ -1,0 +1,9 @@
+# 海报与图片素材（含原型内 assets 目录）
+assets/
+prototype/assets/
+
+# 原始设计图 / 素材原片
+origin_photo/
+
+# Trae 工作区本地配置与规则
+.trae/
