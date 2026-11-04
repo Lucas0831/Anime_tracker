@@ -104,7 +104,7 @@
       return '<button class="week-cell' + (i === state.day ? ' active' : '') + '" data-action="day" data-day="' + i + '" aria-label="' + d.md + ' ' + d.label + '">' +
         '<span class="week-date">' + d.md + '</span>' +
         '<span class="week-day">' + d.label.slice(1) + '</span>' +
-        (i === window.TODAY_INDEX ? '<i class="today-dot" title="今天"></i>' : '') +
+        (i === state.day ? '<i class="today-dot" title="已选中"></i>' : '') +
       '</button>';
     }).join('') + '</nav>';
   }
