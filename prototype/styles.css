@@ -265,6 +265,7 @@ img { display: block; }
   pointer-events: none;
 }
 .dock-group {
+  position: relative;
   flex: 1;
   min-width: 0;
   height: 56px;
@@ -278,7 +279,21 @@ img { display: block; }
   -webkit-backdrop-filter: blur(16px) saturate(1.8);
   pointer-events: auto;
 }
+/* 液态胶囊：选中背景由 JS 逐帧驱动，前后沿用不同弹簧参数形成拉伸与回弹 */
+.dock-thumb {
+  position: absolute;
+  left: 5px;
+  top: 5px;
+  width: 0;
+  height: 46px;
+  border-radius: 23px;
+  background: var(--soft);
+  pointer-events: none;
+  will-change: left, width, top, height;
+}
 .dock-tab {
+  position: relative;
+  z-index: 1;
   flex: 1;
   min-width: 0;
   padding: 0;
@@ -289,7 +304,7 @@ img { display: block; }
   gap: 3px;
   border-radius: 23px;
   color: #1d1d20;
-  transition: background 0.18s, color 0.18s, transform 0.18s;
+  transition: color 0.18s, transform 0.18s;
 }
 .dock-tab .ico {
   width: 20px;
@@ -301,15 +316,33 @@ img { display: block; }
   font-size: 11.5px;
   line-height: 1.25;
   color: var(--ink-2);
-  transition: color 0.18s;
+  transition: color 0.28s ease;
 }
-.dock-tab.active {
-  background: var(--soft);
-  color: var(--accent);
-}
+.dock-tab.active { color: var(--accent); }
 .dock-tab.active .ico { stroke: var(--accent); }
 .dock-tab.active .dock-label { color: var(--accent); font-weight: 600; }
 .dock-tab:active { transform: scale(0.96); }
+/* 选中项颜色渐变：整页重绘后由动画从旧色过渡到新色 */
+.dock-tab.fade-in .dock-label { animation: dockLabelIn 0.28s ease; }
+.dock-tab.fade-out .dock-label { animation: dockLabelOut 0.28s ease; }
+.dock-tab.fade-in .ico { animation: dockIcoIn 0.28s ease; }
+.dock-tab.fade-out .ico { animation: dockIcoOut 0.28s ease; }
+/* 新选中的图标：先缩小再回弹 */
+.dock-tab.fade-in .ico.is-pop {
+  transform-origin: 50% 50%;
+  animation: dockIcoIn 0.28s ease, dockIconPop 0.42s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+@keyframes dockLabelIn { from { color: #1d1d20; } }
+@keyframes dockLabelOut { from { color: var(--accent); } }
+@keyframes dockIcoIn { from { stroke: #1d1d20; } }
+@keyframes dockIcoOut { from { stroke: var(--accent); } }
+@keyframes dockIconPop {
+  0% { transform: scale(1); }
+  22% { transform: scale(0.78); }
+  56% { transform: scale(1.1); }
+  78% { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
 .dock-search {
   width: 56px;
   height: 56px;

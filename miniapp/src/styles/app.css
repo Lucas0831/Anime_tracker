@@ -295,6 +295,7 @@ image { display: block; }
   pointer-events: none;
 }
 .dock-group {
+  position: relative;
   flex: 1;
   min-width: 0;
   height: 107.69rpx;
@@ -308,7 +309,21 @@ image { display: block; }
   -webkit-backdrop-filter: blur(30rpx) saturate(1.8);
   pointer-events: auto;
 }
+/* 液态胶囊：选中背景由 JS 逐帧驱动，前后沿用不同弹簧参数形成拉伸与回弹 */
+.dock-thumb {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-radius: 44.23rpx;
+  background: var(--soft);
+  pointer-events: none;
+  will-change: left, width, top, height;
+}
 .dock-tab {
+  position: relative;
+  z-index: 1;
   flex: 1;
   min-width: 0;
   padding: 0;
@@ -319,23 +334,37 @@ image { display: block; }
   gap: 6rpx;
   border-radius: 44.23rpx;
   color: #1d1d20;
-  transition: background 0.18s, color 0.18s, transform 0.18s;
+  transition: color 0.18s, transform 0.18s;
+}
+.dock-ico {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .dock-label {
   font-size: 21.15rpx;
   line-height: 1.25;
   color: var(--ink-2);
-  transition: color 0.18s;
+  transition: color 0.28s ease;
 }
-.dock-tab.active {
-  background: var(--soft);
-  color: var(--accent);
-}
+.dock-tab.active { color: var(--accent); }
 .dock-tab.active .dock-label {
   color: var(--accent);
   font-weight: 600;
 }
 .dock-tab:active { transform: scale(0.96); }
+/* 新选中的图标：先缩小再回弹 */
+.dock-ico.is-pop {
+  transform-origin: 50% 50%;
+  animation: dockIconPop 0.42s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+@keyframes dockIconPop {
+  0% { transform: scale(1); }
+  22% { transform: scale(0.78); }
+  56% { transform: scale(1.1); }
+  78% { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
 .dock-search {
   width: 107.69rpx;
   height: 107.69rpx;

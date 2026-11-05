@@ -50,7 +50,7 @@
       </view>
     </view>
 
-    <view v-if="state.view === 'timeline'" class="timeline-wrap" :class="{ 'is-empty': !items.length }">
+    <view v-if="state.view === 'timeline'" class="timeline-wrap" :class="{ 'is-empty': !items.length }" :style="pushStyle">
       <template v-if="items.length">
         <view v-for="g in groups" :key="g.time" class="tl-group">
           <view class="tl-rail">
@@ -76,10 +76,10 @@
           </view>
         </view>
       </template>
-      <EmptyState v-else :kind="state.filter === 'all' ? 'day' : 'filter'" @reset="state.filter = 'all'" />
+      <EmptyState v-else :kind="state.filter === 'all' ? 'day' : 'filter'" @reset="resetFilter" />
     </view>
 
-    <view v-else-if="state.view === 'list'" class="list-body-wrap">
+    <view v-else-if="state.view === 'list'" class="list-body-wrap" :style="pushStyle">
       <view
         v-for="a in items"
         :key="a.id"
@@ -106,10 +106,10 @@
           </view>
         </view>
       </view>
-      <EmptyState v-if="!items.length" :kind="state.filter === 'all' ? 'day' : 'filter'" @reset="state.filter = 'all'" />
+      <EmptyState v-if="!items.length" :kind="state.filter === 'all' ? 'day' : 'filter'" @reset="resetFilter" />
     </view>
 
-    <view v-else class="grid-body">
+    <view v-else class="grid-body" :style="pushStyle">
       <view v-if="items.length" class="grid-wrap">
         <view v-for="a in items" :key="a.id" class="grid-card" @tap="openDetail(a.id)">
           <view class="grid-cover">
@@ -119,19 +119,22 @@
           <text class="grid-title">{{ a.title }}</text>
         </view>
       </view>
-      <EmptyState v-else :kind="state.filter === 'all' ? 'day' : 'filter'" @reset="state.filter = 'all'" />
+      <EmptyState v-else :kind="state.filter === 'all' ? 'day' : 'filter'" @reset="resetFilter" />
     </view>
 
     <view class="bottom-dock" aria-label="底部导航">
       <view class="dock-group" role="group" aria-label="筛选">
+        <view class="dock-thumb" :style="thumbStyle" aria-hidden="true"></view>
         <view
           v-for="f in FILTERS"
           :key="f.key"
           class="dock-tab"
           :class="{ active: state.filter === f.key }"
-          @tap="state.filter = f.key"
+          @tap="selectFilter(f.key)"
         >
-          <AppIcon :name="f.icon" :size="40" :color="state.filter === f.key ? '#0a84ff' : '#1d1d20'" />
+          <view class="dock-ico" :class="{ 'is-pop': popKey === f.key }">
+            <AppIcon :name="f.icon" :size="40" :color="state.filter === f.key ? '#0a84ff' : '#1d1d20'" />
+          </view>
           <text class="dock-label">{{ f.label }}</text>
         </view>
       </view>
@@ -145,7 +148,7 @@
 </template>
 
 <script setup>
-  import { computed } from 'vue';
+  import { computed, getCurrentInstance, nextTick, onMounted, reactive, ref } from 'vue';
   import AppIcon from '../../components/AppIcon.vue';
   import EmptyState from '../../components/EmptyState.vue';
   import {
@@ -172,6 +175,172 @@
       group.list.push(a);
     });
     return result;
+  });
+
+  /* ---------- 底部胶囊液态动效 ---------- */
+  const instance = getCurrentInstance();
+  const thumb = reactive({ left: 0, top: 0, width: 0, height: 0 });
+  const thumbStyle = computed(() => ({
+    left: thumb.left + 'px',
+    top: thumb.top + 'px',
+    width: thumb.width + 'px',
+    height: thumb.height + 'px'
+  }));
+  const pushStyle = reactive({ opacity: '', transform: '', transition: '' });
+  const popKey = ref('');
+  const tabRects = {};
+  let thumbAnimating = false;
+  let rafId = 0;
+  let lastFrame = 0;
+
+  function nowMs() {
+    return typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
+  }
+
+  function raf(cb) {
+    return typeof requestAnimationFrame === 'function' ? requestAnimationFrame(cb) : setTimeout(cb, 16);
+  }
+
+  function caf(id) {
+    if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(id);
+    else clearTimeout(id);
+  }
+
+  function prefersReducedMotion() {
+    return typeof window !== 'undefined' && window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  function measureTabs() {
+    const query = uni.createSelectorQuery().in(instance.proxy);
+    query.select('.dock-group').boundingClientRect();
+    query.selectAll('.dock-tab').boundingClientRect();
+    query.exec((res) => {
+      const group = res[0];
+      const tabs = res[1] || [];
+      if (!group || !tabs.length) return;
+      tabs.forEach((r, i) => {
+        tabRects[FILTERS[i].key] = {
+          left: r.left - group.left,
+          top: r.top - group.top,
+          width: r.width,
+          height: r.height
+        };
+      });
+      if (!thumbAnimating) {
+        const rect = tabRects[state.filter];
+        if (rect) Object.assign(thumb, rect);
+      }
+    });
+  }
+
+  function springStep(edge, target, stiffness, damping, dt) {
+    const accel = (target - edge.v) * stiffness - edge.vel * damping;
+    edge.vel += accel * dt;
+    edge.v += edge.vel * dt;
+  }
+
+  // 前沿与后沿各自用弹簧追赶目标：前沿更快到位，后沿稍慢并轻微回弹，中途被拉长、压扁
+  function animateThumb(start, target) {
+    if (rafId) caf(rafId);
+    const rightward = target.left >= start.left;
+    const leadFrom = rightward ? start.left + start.width : start.left;
+    const leadTo = rightward ? target.left + target.width : target.left;
+    const trailFrom = rightward ? start.left : start.left + start.width;
+    const trailTo = rightward ? target.left : target.left + target.width;
+    const lead = { v: leadFrom, vel: 0 };
+    const trail = { v: trailFrom, vel: 0 };
+    const baseHeight = target.height;
+    const startedAt = nowMs();
+    lastFrame = startedAt;
+    thumbAnimating = true;
+
+    function frame() {
+      const now = nowMs();
+      const dt = Math.min(34, now - lastFrame) / 1000;
+      lastFrame = now;
+      springStep(lead, leadTo, 420, 30, dt);
+      springStep(trail, trailTo, 220, 20, dt);
+
+      const settled = Math.abs(lead.v - leadTo) < 0.25 && Math.abs(lead.vel) < 0.35 &&
+        Math.abs(trail.v - trailTo) < 0.25 && Math.abs(trail.vel) < 0.35;
+      if (settled || now - startedAt > 420) {
+        thumb.left = target.left;
+        thumb.top = target.top;
+        thumb.width = target.width;
+        thumb.height = baseHeight;
+        thumbAnimating = false;
+        rafId = 0;
+        return;
+      }
+
+      const width = Math.max(24, Math.abs(lead.v - trail.v));
+      const stretch = target.width ? Math.max(0, width - target.width) / target.width : 0;
+      const height = baseHeight * (1 - Math.min(0.1, stretch * 0.5));
+      thumb.left = Math.min(lead.v, trail.v);
+      thumb.width = width;
+      thumb.height = height;
+      thumb.top = target.top + (baseHeight - height) / 2;
+      rafId = raf(frame);
+    }
+
+    rafId = raf(frame);
+  }
+
+  // 页面内容沿点击方向轻推淡入
+  let pushToken = 0;
+
+  function pushContent(dir) {
+    if (prefersReducedMotion()) return;
+    const token = ++pushToken;
+    pushStyle.transition = 'none';
+    pushStyle.opacity = '0';
+    pushStyle.transform = 'translateX(' + dir * 14 + 'px)';
+    nextTick(() => {
+      setTimeout(() => {
+        if (token !== pushToken) return;
+        pushStyle.transition = 'transform 0.34s cubic-bezier(0.22, 0.9, 0.24, 1), opacity 0.28s ease';
+        pushStyle.opacity = '1';
+        pushStyle.transform = 'translateX(0)';
+        setTimeout(() => {
+          if (token !== pushToken) return;
+          pushStyle.transition = '';
+          pushStyle.opacity = '';
+          pushStyle.transform = '';
+        }, 380);
+      }, 24);
+    });
+  }
+
+  function selectFilter(key) {
+    if (key === state.filter) return;
+    const fromKey = state.filter;
+    const fromIndex = FILTERS.findIndex((f) => f.key === fromKey);
+    const toIndex = FILTERS.findIndex((f) => f.key === key);
+    const start = { left: thumb.left, top: thumb.top, width: thumb.width, height: thumb.height };
+    state.filter = key;
+    popKey.value = key;
+    pushContent(toIndex > fromIndex ? 1 : -1);
+
+    const target = tabRects[key];
+    if (!target) {
+      nextTick(measureTabs);
+      return;
+    }
+    if (prefersReducedMotion() || !start.width) {
+      Object.assign(thumb, target);
+      return;
+    }
+    animateThumb(start, target);
+  }
+
+  function resetFilter() {
+    selectFilter('all');
+  }
+
+  onMounted(() => {
+    nextTick(measureTabs);
+    setTimeout(measureTabs, 120);
   });
 
   const NEXT_VIEW = { timeline: 'list', list: 'grid', grid: 'timeline' };

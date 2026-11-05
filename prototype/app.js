@@ -102,11 +102,13 @@
   }
 
   function filters() {
-    return '<div class="dock-group" role="group" aria-label="筛选">' + FILTERS.map(function (f) {
-      return '<button class="dock-tab' + (state.filter === f.key ? ' active' : '') + '" data-action="filter" data-filter="' + f.key + '">' +
-        icon(f.icon, 'dock-ico') + '<span class="dock-label">' + f.label + '</span>' +
-      '</button>';
-    }).join('') + '</div>';
+    return '<div class="dock-group" role="group" aria-label="筛选">' +
+      '<i class="dock-thumb" aria-hidden="true"></i>' +
+      FILTERS.map(function (f) {
+        return '<button class="dock-tab' + (state.filter === f.key ? ' active' : '') + '" data-action="filter" data-filter="' + f.key + '">' +
+          icon(f.icon, 'dock-ico') + '<span class="dock-label">' + f.label + '</span>' +
+        '</button>';
+      }).join('') + '</div>';
   }
 
   function dayBar() {
@@ -361,7 +363,154 @@
     updateSearchResults();
   }
 
+  /* ---------- 底部胶囊液态动效 ---------- */
+  var thumbGeo = null;
+  var thumbRaf = 0;
+
+  function prefersReducedMotion() {
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  function paintThumb(thumb, geo) {
+    thumb.style.left = geo.left + 'px';
+    thumb.style.top = geo.top + 'px';
+    thumb.style.width = geo.width + 'px';
+    thumb.style.height = geo.height + 'px';
+  }
+
+  function stopThumbAnim() {
+    if (thumbRaf) {
+      cancelAnimationFrame(thumbRaf);
+      thumbRaf = 0;
+    }
+  }
+
+  function tabMetrics(group, index) {
+    var tab = group && group.querySelectorAll('.dock-tab')[index];
+    if (!tab) return null;
+    return { left: tab.offsetLeft, top: tab.offsetTop, width: tab.offsetWidth, height: tab.offsetHeight };
+  }
+
+  // 每次整页重绘后把胶囊放到当前选中项（不做动画）
+  function syncDockThumb() {
+    var group = viewport.querySelector('.dock-group');
+    var thumb = group && group.querySelector('.dock-thumb');
+    var tab = group && group.querySelector('.dock-tab.active');
+    if (!thumb || !tab) return;
+    thumbGeo = { left: tab.offsetLeft, top: tab.offsetTop, width: tab.offsetWidth, height: tab.offsetHeight };
+    paintThumb(thumb, thumbGeo);
+  }
+
+  function springStep(edge, target, stiffness, damping, dt) {
+    var accel = (target - edge.v) * stiffness - edge.vel * damping;
+    edge.vel += accel * dt;
+    edge.v += edge.vel * dt;
+  }
+
+  // 前沿与后沿各自用弹簧追赶目标：前沿更快到位，后沿稍慢并轻微回弹，中途被拉长、压扁
+  function animateThumb(thumb, start, target) {
+    var rightward = target.left >= start.left;
+    var leadFrom = rightward ? start.left + start.width : start.left;
+    var leadTo = rightward ? target.left + target.width : target.left;
+    var trailFrom = rightward ? start.left : start.left + start.width;
+    var trailTo = rightward ? target.left : target.left + target.width;
+    var lead = { v: leadFrom, vel: 0 };
+    var trail = { v: trailFrom, vel: 0 };
+    var baseHeight = target.height;
+    var startedAt = performance.now();
+    var prevAt = startedAt;
+
+    function frame(now) {
+      var dt = Math.min(34, now - prevAt) / 1000;
+      prevAt = now;
+      springStep(lead, leadTo, 420, 30, dt);
+      springStep(trail, trailTo, 220, 20, dt);
+
+      var settled = Math.abs(lead.v - leadTo) < 0.25 && Math.abs(lead.vel) < 0.35 &&
+        Math.abs(trail.v - trailTo) < 0.25 && Math.abs(trail.vel) < 0.35;
+      if (settled || now - startedAt > 420) {
+        thumb.style.left = target.left + 'px';
+        thumb.style.top = target.top + 'px';
+        thumb.style.width = target.width + 'px';
+        thumb.style.height = baseHeight + 'px';
+        thumbGeo = { left: target.left, top: target.top, width: target.width, height: baseHeight };
+        thumbRaf = 0;
+        return;
+      }
+
+      var left = Math.min(lead.v, trail.v);
+      var width = Math.max(24, Math.abs(lead.v - trail.v));
+      var stretch = target.width ? Math.max(0, width - target.width) / target.width : 0;
+      var height = baseHeight * (1 - Math.min(0.1, stretch * 0.5));
+      var top = target.top + (baseHeight - height) / 2;
+
+      paintThumb(thumb, { left: left, top: top, width: width, height: height });
+      thumbGeo = { left: left, top: top, width: width, height: height };
+      thumbRaf = requestAnimationFrame(frame);
+    }
+
+    thumbRaf = requestAnimationFrame(frame);
+  }
+
+  // 页面内容沿点击方向轻推淡入
+  var pushToken = 0;
+
+  function pushContent(dir) {
+    if (prefersReducedMotion()) return;
+    var el = viewport.querySelector('.timeline-wrap, .list-body-wrap, .grid-body');
+    if (!el) return;
+    var token = ++pushToken;
+    el.style.transition = 'none';
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(' + (dir * 14) + 'px)';
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        if (token !== pushToken) return;
+        el.style.transition = 'transform 0.34s cubic-bezier(0.22, 0.9, 0.24, 1), opacity 0.28s ease';
+        el.style.opacity = '1';
+        el.style.transform = 'translateX(0)';
+        window.setTimeout(function () {
+          if (token !== pushToken) return;
+          el.style.transition = '';
+          el.style.opacity = '';
+          el.style.transform = '';
+        }, 380);
+      });
+    });
+  }
+
+  function dockTransition(fromKey, toKey, fromGeo) {
+    var group = viewport.querySelector('.dock-group');
+    var thumb = group && group.querySelector('.dock-thumb');
+    if (!thumb) return;
+    var fromIndex = -1;
+    var toIndex = -1;
+    FILTERS.forEach(function (f, i) {
+      if (f.key === fromKey) fromIndex = i;
+      if (f.key === toKey) toIndex = i;
+    });
+    var target = tabMetrics(group, toIndex);
+    if (!target) return;
+
+    var prevTab = group.querySelectorAll('.dock-tab')[fromIndex];
+    var nextTab = group.querySelectorAll('.dock-tab')[toIndex];
+    if (prevTab && prevTab !== nextTab) prevTab.classList.add('fade-out');
+    nextTab.classList.add('fade-in');
+    var nextIco = nextTab.querySelector('.ico');
+    if (nextIco) nextIco.classList.add('is-pop');
+
+    pushContent(toIndex > fromIndex ? 1 : -1);
+
+    if (prefersReducedMotion()) {
+      paintThumb(thumb, target);
+      thumbGeo = target;
+      return;
+    }
+    animateThumb(thumb, fromGeo || target, target);
+  }
+
   function render() {
+    stopThumbAnim();
     if (state.view === 'timeline') viewport.innerHTML = renderTimeline();
     else if (state.view === 'list') viewport.innerHTML = renderList();
     else if (state.view === 'grid') viewport.innerHTML = renderGrid();
@@ -372,6 +521,7 @@
     document.title = state.view === 'detail' && a ? '追番助手 · ' + a.title
       : state.view === 'search' ? '追番助手 · 搜索'
       : '追番助手 · ' + ({ timeline: '番剧时间轴', list: '番剧列表', grid: '番剧网格' })[state.view];
+    syncDockThumb();
   }
 
   function renderAndTop() {
@@ -451,6 +601,10 @@
     renderAndTop();
   });
 
+  window.addEventListener('resize', function () {
+    if (!thumbRaf) syncDockThumb();
+  });
+
   viewport.addEventListener('click', function (e) {
     var target = e.target.closest('[data-action]');
     if (!target || !viewport.contains(target)) return;
@@ -469,8 +623,13 @@
     } else if (action === 'day') {
       setDay(parseInt(target.getAttribute('data-day'), 10) || 0);
     } else if (action === 'filter') {
-      state.filter = target.getAttribute('data-filter');
+      var nextFilter = target.getAttribute('data-filter');
+      if (nextFilter === state.filter) return;
+      var fromFilter = state.filter;
+      var fromGeo = thumbGeo ? { left: thumbGeo.left, top: thumbGeo.top, width: thumbGeo.width, height: thumbGeo.height } : null;
+      state.filter = nextFilter;
       renderKeepScroll();
+      dockTransition(fromFilter, nextFilter, fromGeo);
     } else if (action === 'reset-filter') {
       state.filter = 'all';
       renderKeepScroll();
