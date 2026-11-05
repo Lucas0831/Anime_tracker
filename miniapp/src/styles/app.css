@@ -1,5 +1,5 @@
 /* 追番助手 · uni-app 小程序样式 */
-:root {
+page {
   --ink: #111114;
   --ink-2: #34343a;
   --muted: #8e8e94;
@@ -9,24 +9,18 @@
   --card: #ffffff;
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   --font-num: "NeutraText-DemiAlt", "NeutraText", "Century Gothic", "Avenir Next", "Futura", "Trebuchet MS", sans-serif;
-}
-
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-html, body { height: 100%; }
-
-page {
   background: #fff;
   font-family: var(--font);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
 }
 
-body {
-  margin: 0;
-  font-family: var(--font);
-  color: var(--ink);
-  background: #fff;
+view,
+text,
+image,
+input {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 image { display: block; }
@@ -126,7 +120,7 @@ image { display: block; }
   color: #1d1d20;
   transition: background 0.15s;
 }
-.app-icon-btn:active { background: #f2f2f4; }
+.icon-btn:active { background: #f2f2f4; }
 
 /* ---------- Week ---------- */
 .week-strip {
