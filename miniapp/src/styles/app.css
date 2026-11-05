@@ -12,6 +12,8 @@ page {
   --ink-2: #3a3a41;
   --muted: #62626a;
   --muted-2: #6f6f77;
+  /* 底部 Tab Bar 选中态强调色 */
+  --accent: #0a84ff;
 
   /* 微对比色阶：页面底 → 玻璃面 → 悬浮面，每层只差一点点亮度 */
   --bg-top: #f8f9fb;
@@ -114,10 +116,15 @@ image { display: block; }
   to { opacity: 1; transform: translateY(0); }
 }
 .page-pad { height: calc(53.85rpx + env(safe-area-inset-bottom)); }
+/* 时间线 / 列表 / 网格页底部为悬浮胶囊 Tab Bar 预留空间 */
+.page-timeline .page-pad,
+.page-list .page-pad,
+.page-grid .page-pad { height: calc(157.69rpx + env(safe-area-inset-bottom)); }
 
-/* 时间线顶栏区块：标题、周日期条、日期栏合并为一个整体固定，避免分块吸顶产生缝隙 */
+/* 顶栏区块：标题与周日期条（时间线另含日期栏）合并为一个整体固定，三个视图均不随滚动移动 */
 .top-bar {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 30;
   background: linear-gradient(180deg, rgba(250, 251, 253, 0.9) 0%, rgba(246, 247, 251, 0.82) 100%);
   backdrop-filter: blur(34rpx) saturate(1.7);
@@ -125,12 +132,8 @@ image { display: block; }
   border-bottom: 1rpx solid var(--glass-line);
   box-shadow: var(--sheen), 0 10rpx 30rpx rgba(18, 20, 30, 0.035);
 }
-.top-bar.is-fixed {
-  position: sticky;
-  top: 0;
-}
-.top-bar.is-fixed .app-header { position: static; }
-/* 顶栏内部各行不再各自铺白底，整块共用一层玻璃材质 */
+/* 顶栏内部各行不再各自铺白底与吸顶，整块共用一层玻璃材质 */
+.top-bar .app-header { position: static; }
 .top-bar .app-header,
 .top-bar .week-strip,
 .top-bar .week-chips,
@@ -160,6 +163,12 @@ image { display: block; }
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+/* 顶栏左右各留一个等宽位，标题保持视觉居中 */
+.header-spacer {
+  width: 84.62rpx;
+  height: 84.62rpx;
+  flex: 0 0 auto;
 }
 .app-title {
   margin: 0;
@@ -270,29 +279,80 @@ image { display: block; }
 .day-name { letter-spacing: 0.01em; }
 .day-md { font-weight: 600; letter-spacing: 0.01em; }
 
-.filters {
+/* ---------- Bottom dock ---------- */
+/* 胶囊式悬浮 Tab Bar：左侧筛选组（全部 / 番剧 / 国漫）+ 右侧独立搜索胶囊 */
+.bottom-dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  /* 不再叠加 env(safe-area-inset-bottom)：真机/模拟器的安全区会让底部间距远大于左右边距 */
+  bottom: 38.46rpx;
+  z-index: 40;
   display: flex;
-  padding: 5.77rpx;
-  border-radius: 1921.15rpx;
+  align-items: center;
+  gap: 15.38rpx;
+  padding: 0 38.46rpx;
+  pointer-events: none;
+}
+.dock-group {
+  flex: 1;
+  min-width: 0;
+  height: 107.69rpx;
+  display: flex;
+  padding: 9.62rpx;
+  border-radius: 53.85rpx;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1rpx solid var(--glass-edge);
+  box-shadow: var(--shadow-3), var(--sheen);
+  backdrop-filter: blur(30rpx) saturate(1.8);
+  -webkit-backdrop-filter: blur(30rpx) saturate(1.8);
+  pointer-events: auto;
+}
+.dock-tab {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+  border-radius: 44.23rpx;
+  color: #1d1d20;
+  transition: background 0.18s, color 0.18s, transform 0.18s;
+}
+.dock-label {
+  font-size: 21.15rpx;
+  line-height: 1.25;
+  color: var(--ink-2);
+  transition: color 0.18s;
+}
+.dock-tab.active {
   background: var(--soft);
-  border: 1rpx solid rgba(255, 255, 255, 0.6);
-  box-shadow: inset 0 1rpx 3rpx rgba(20, 20, 30, 0.045);
-  flex: 0 0 auto;
+  color: var(--accent);
 }
-.filter {
-  padding: 11.54rpx 19.23rpx;
-  border-radius: 1921.15rpx;
-  font-size: 22.12rpx;
-  color: var(--muted);
-  white-space: nowrap;
-  transition: all 0.18s;
-}
-.filter.active {
-  background: var(--surface-3);
-  color: var(--ink);
+.dock-tab.active .dock-label {
+  color: var(--accent);
   font-weight: 600;
-  box-shadow: var(--shadow-1), var(--sheen);
 }
+.dock-tab:active { transform: scale(0.96); }
+.dock-search {
+  width: 107.69rpx;
+  height: 107.69rpx;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #1d1d20;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1rpx solid var(--glass-edge);
+  box-shadow: var(--shadow-3), var(--sheen);
+  backdrop-filter: blur(28rpx) saturate(1.8);
+  -webkit-backdrop-filter: blur(28rpx) saturate(1.8);
+  pointer-events: auto;
+  transition: transform 0.15s, background 0.15s;
+}
+.dock-search:active { transform: scale(0.94); background: rgba(255, 255, 255, 0.86); }
 
 /* ---------- Timeline ---------- */
 .timeline-wrap {

@@ -6,16 +6,14 @@
     @touchend="onTouchEnd"
     @touchcancel="onTouchCancel"
   >
-    <view class="top-bar" :class="{ 'is-fixed': state.view === 'timeline' }">
+    <view class="top-bar">
       <view class="app-header">
         <view class="header-row">
           <view class="icon-btn" :aria-label="mode.label" @tap="switchView">
             <AppIcon :name="mode.icon" :size="42" />
           </view>
           <text class="app-title">{{ mode.title }}</text>
-          <view class="icon-btn" aria-label="搜索番剧" @tap="openSearch">
-            <AppIcon name="search" :size="42" />
-          </view>
+          <view class="header-spacer"></view>
         </view>
       </view>
 
@@ -48,15 +46,6 @@
           <view class="day-dot"></view>
           <text class="day-name">{{ WEEK[state.day].label }}</text>
           <text class="day-md">{{ WEEK[state.day].md }}</text>
-        </view>
-        <view class="filters" role="group" aria-label="筛选">
-          <view
-            v-for="f in FILTERS"
-            :key="f.key"
-            class="filter"
-            :class="{ active: state.filter === f.key }"
-            @tap="state.filter = f.key"
-          >{{ f.label }}</view>
         </view>
       </view>
     </view>
@@ -131,6 +120,24 @@
         </view>
       </view>
       <EmptyState v-else :kind="state.filter === 'all' ? 'day' : 'filter'" @reset="state.filter = 'all'" />
+    </view>
+
+    <view class="bottom-dock" aria-label="底部导航">
+      <view class="dock-group" role="group" aria-label="筛选">
+        <view
+          v-for="f in FILTERS"
+          :key="f.key"
+          class="dock-tab"
+          :class="{ active: state.filter === f.key }"
+          @tap="state.filter = f.key"
+        >
+          <AppIcon :name="f.icon" :size="40" :color="state.filter === f.key ? '#0a84ff' : '#1d1d20'" />
+          <text class="dock-label">{{ f.label }}</text>
+        </view>
+      </view>
+      <view class="dock-search" aria-label="搜索番剧" @tap="openSearch">
+        <AppIcon name="search" :size="46" />
+      </view>
     </view>
 
     <view class="page-pad"></view>

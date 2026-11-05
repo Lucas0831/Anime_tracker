@@ -15,9 +15,9 @@
   };
 
   var FILTERS = [
-    { key: 'all', label: '全部' },
-    { key: 'anime', label: '番剧' },
-    { key: 'guochuang', label: '国创' }
+    { key: 'all', label: '全部', icon: 'layers' },
+    { key: 'anime', label: '番剧', icon: 'broadcast' },
+    { key: 'guochuang', label: '国漫', icon: 'globe' }
   ];
 
   function esc(v) {
@@ -35,6 +35,7 @@
     clock: '<circle cx="12" cy="12" r="8.3"/><path d="M12 7.7V12l2.9 1.8"/>',
     broadcast: '<circle cx="12" cy="12" r="1.7"/><path d="M8.4 8.6a5 5 0 0 0 0 6.8M15.6 8.6a5 5 0 0 1 0 6.8M5.7 5.9a8.5 8.5 0 0 0 0 12.2M18.3 5.9a8.5 8.5 0 0 1 0 12.2"/>',
     globe: '<circle cx="12" cy="12" r="8.3"/><path d="M3.7 12h16.6M12 3.7c2.5 2.6 3.7 5.4 3.7 8.3S14.5 17.7 12 20.3c-2.5-2.6-3.7-5.4-3.7-8.3S9.5 6.3 12 3.7z"/>',
+    layers: '<path d="M12 3.5l8.4 4.6-8.4 4.6-8.4-4.6z"/><path d="M3.6 12.6l8.4 4.6 8.4-4.6"/><path d="M3.6 17l8.4 4.6 8.4-4.6"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
     arrowUp: '<path d="M12 19V5M6.5 10.5L12 5l5.5 5.5"/>',
     book: '<path d="M4.5 5.5c2.4-.8 4.6-.3 7.5 1.2v12c-2.9-1.5-5.1-2-7.5-1.2zM19.5 5.5c-2.4-.8-4.6-.3-7.5 1.2v12c2.9-1.5 5.1-2 7.5-1.2z"/>',
@@ -80,7 +81,7 @@
       '<header class="app-header">' +
         '<button class="icon-btn" data-action="switch" aria-label="' + m.label + '" title="' + m.label + '">' + icon(m.icon) + '</button>' +
         '<h1>' + m.title + '</h1>' +
-        '<button class="icon-btn" data-action="open-search" aria-label="搜索番剧" title="搜索番剧">' + icon('i-search') + '</button>' +
+        '<span class="header-spacer" aria-hidden="true"></span>' +
       '</header>';
   }
 
@@ -101,16 +102,24 @@
   }
 
   function filters() {
-    return '<div class="filters" role="group" aria-label="筛选">' + FILTERS.map(function (f) {
-      return '<button class="filter' + (state.filter === f.key ? ' active' : '') + '" data-action="filter" data-filter="' + f.key + '">' + f.label + '</button>';
+    return '<div class="dock-group" role="group" aria-label="筛选">' + FILTERS.map(function (f) {
+      return '<button class="dock-tab' + (state.filter === f.key ? ' active' : '') + '" data-action="filter" data-filter="' + f.key + '">' +
+        icon(f.icon, 'dock-ico') + '<span class="dock-label">' + f.label + '</span>' +
+      '</button>';
     }).join('') + '</div>';
   }
 
   function dayBar() {
     return '<div class="day-bar">' +
       '<div class="day-label"><i class="day-dot"></i><span class="day-name">' + window.WEEK[state.day].label + '</span><span class="day-md">' + window.WEEK[state.day].md + '</span></div>' +
-      filters() +
     '</div>';
+  }
+
+  function bottomDock() {
+    return '<nav class="bottom-dock" aria-label="底部导航">' +
+      filters() +
+      '<button class="dock-search" data-action="open-search" aria-label="搜索番剧" title="搜索番剧">' + icon('i-search') + '</button>' +
+    '</nav>';
   }
 
   function emptyState(kind) {
@@ -161,7 +170,8 @@
       : emptyState(state.filter === 'all' ? 'day' : 'filter');
     return '<div class="page page-timeline">' +
       '<div class="top-bar">' + header() + weekStrip() + dayBar() + '</div>' +
-      '<div class="timeline-wrap' + (items.length ? '' : ' is-empty') + '">' + body + '</div><div class="page-pad"></div></div>';
+      '<div class="timeline-wrap' + (items.length ? '' : ' is-empty') + '">' + body + '</div>' +
+      bottomDock() + '<div class="page-pad"></div></div>';
   }
 
   function listCard(a) {
@@ -185,8 +195,8 @@
     var body = items.length
       ? items.map(listCard).join('')
       : emptyState(state.filter === 'all' ? 'day' : 'filter');
-    return '<div class="page page-list">' + header() + weekChips() +
-      '<div class="list-body-wrap">' + body + '</div><div class="page-pad"></div></div>';
+    return '<div class="page page-list"><div class="top-bar">' + header() + weekChips() + '</div>' +
+      '<div class="list-body-wrap">' + body + '</div>' + bottomDock() + '<div class="page-pad"></div></div>';
   }
 
   function gridCard(a) {
@@ -202,8 +212,8 @@
     var body = items.length
       ? '<div class="grid-wrap">' + items.map(gridCard).join('') + '</div>'
       : emptyState(state.filter === 'all' ? 'day' : 'filter');
-    return '<div class="page page-grid">' + header() + weekChips() +
-      '<div class="grid-body">' + body + '</div><div class="page-pad"></div></div>';
+    return '<div class="page page-grid"><div class="top-bar">' + header() + weekChips() + '</div>' +
+      '<div class="grid-body">' + body + '</div>' + bottomDock() + '<div class="page-pad"></div></div>';
   }
 
   function searchRow(a) {
@@ -215,7 +225,7 @@
         '<div class="search-row-meta">' +
           '<span>' + window.WEEK[a.day].label + ' ' + a.time + '</span>' +
           '<span class="dot-sep"></span>' +
-          '<span>' + (a.category === 'guochuang' ? '国创' : '番剧') + '</span>' +
+          '<span>' + (a.category === 'guochuang' ? '国漫' : '番剧') + '</span>' +
           '<span class="dot-sep"></span>' +
           '<span>第' + a.ep + '话</span>' +
         '</div>' +
@@ -424,7 +434,6 @@
   function switchView() {
     var next = { timeline: 'list', list: 'grid', grid: 'timeline' }[state.view];
     if (!next) return;
-    if (state.view === 'timeline' && next !== 'timeline') state.filter = 'all';
     navigate(next);
   }
 

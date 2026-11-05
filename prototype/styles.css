@@ -10,6 +10,8 @@
   --ink: #111114;
   --ink-2: #34343a;
   --muted: #8e8e94;
+  /* 底部 Tab Bar 选中态强调色 */
+  --accent: #0a84ff;
   --line: #ececee;
   --soft: #f4f4f5;
   --soft-2: #f7f7f8;
@@ -116,6 +118,10 @@ img { display: block; }
   to { opacity: 1; transform: translateY(0); }
 }
 .page-pad { height: calc(28px + env(safe-area-inset-bottom)); }
+/* 时间线 / 列表 / 网格页底部为悬浮胶囊 Tab Bar 预留空间 */
+.page-timeline .page-pad,
+.page-list .page-pad,
+.page-grid .page-pad { height: calc(82px + env(safe-area-inset-bottom)); }
 
 /* 时间线顶栏区块：标题、周日期条、日期栏合并为一个整体固定，避免分块吸顶产生缝隙 */
 .top-bar {
@@ -146,6 +152,8 @@ img { display: block; }
   letter-spacing: 0.03em;
   color: #17171a;
 }
+/* 顶栏左右各留一个等宽位，标题保持视觉居中 */
+.header-spacer { width: 44px; height: 44px; flex: 0 0 auto; }
 .icon-btn {
   width: 44px;
   height: 44px;
@@ -242,27 +250,84 @@ img { display: block; }
 .day-name { letter-spacing: 0.01em; }
 .day-md { font-weight: 600; letter-spacing: 0.01em; }
 
-.filters {
+/* ---------- Bottom dock ---------- */
+/* 胶囊式悬浮 Tab Bar：左侧筛选组（全部 / 番剧 / 国漫）+ 右侧独立搜索胶囊 */
+.bottom-dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  z-index: 40;
   display: flex;
-  padding: 3px;
-  border-radius: 999px;
-  background: #f2f2f3;
-  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  padding: 0 20px;
+  pointer-events: none;
 }
-.filter {
-  padding: 6px 10px;
-  border-radius: 999px;
+.dock-group {
+  flex: 1;
+  min-width: 0;
+  height: 56px;
+  display: flex;
+  padding: 5px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow: 0 26px 70px rgba(18, 20, 30, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px) saturate(1.8);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8);
+  pointer-events: auto;
+}
+.dock-tab {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: 23px;
+  color: #1d1d20;
+  transition: background 0.18s, color 0.18s, transform 0.18s;
+}
+.dock-tab .ico {
+  width: 20px;
+  height: 20px;
+  stroke: #1d1d20;
+  transition: stroke 0.18s;
+}
+.dock-label {
   font-size: 11.5px;
-  color: #7d7d82;
-  white-space: nowrap;
-  transition: all 0.18s;
+  line-height: 1.25;
+  color: var(--ink-2);
+  transition: color 0.18s;
 }
-.filter.active {
-  background: #fff;
-  color: #111;
-  font-weight: 600;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+.dock-tab.active {
+  background: var(--soft);
+  color: var(--accent);
 }
+.dock-tab.active .ico { stroke: var(--accent); }
+.dock-tab.active .dock-label { color: var(--accent); font-weight: 600; }
+.dock-tab:active { transform: scale(0.96); }
+.dock-search {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #1d1d20;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow: 0 26px 70px rgba(18, 20, 30, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px) saturate(1.8);
+  -webkit-backdrop-filter: blur(14px) saturate(1.8);
+  pointer-events: auto;
+  transition: transform 0.15s, background 0.15s;
+}
+.dock-search .ico { width: 22px; height: 22px; stroke: #1d1d20; }
+.dock-search:active { transform: scale(0.94); background: rgba(255, 255, 255, 0.86); }
 
 /* ---------- Timeline ---------- */
 .timeline-wrap {

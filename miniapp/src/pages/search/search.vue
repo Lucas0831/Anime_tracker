@@ -59,7 +59,7 @@
                 <view class="search-row-meta">
                   <text>{{ WEEK[a.day].label }} {{ a.time }}</text>
                   <view class="dot-sep"></view>
-                  <text>{{ a.category === 'guochuang' ? '国创' : '番剧' }}</text>
+                  <text>{{ a.category === 'guochuang' ? '国漫' : '番剧' }}</text>
                   <view class="dot-sep"></view>
                   <text>第{{ a.ep }}话</text>
                 </view>

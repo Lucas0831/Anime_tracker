@@ -2,9 +2,9 @@ import { reactive } from 'vue';
 import { WEEK, TODAY_INDEX, ANIME, SEARCH_HISTORY } from './data/anime';
 
 export const FILTERS = [
-  { key: 'all', label: '全部' },
-  { key: 'anime', label: '番剧' },
-  { key: 'guochuang', label: '国创' }
+  { key: 'all', label: '全部', icon: 'layers' },
+  { key: 'anime', label: '番剧', icon: 'broadcast' },
+  { key: 'guochuang', label: '国漫', icon: 'globe' }
 ];
 
 export const MODES = {
