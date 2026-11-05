@@ -95,7 +95,7 @@
           <text v-if="a.jp" class="list-jp">{{ a.jp }}</text>
           <view class="list-meta">
             <view class="meta-chip">
-              <AppIcon name="clock" color="#7e7e84" :size="26" />
+              <AppIcon name="clock" color="#8e8e94" :size="26" />
               <text>{{ a.time }} {{ dayStatus(a) }}</text>
             </view>
             <view class="meta-chip">
@@ -103,7 +103,7 @@
               <text>第{{ a.ep }}集</text>
             </view>
             <view v-if="a.category === 'guochuang'" class="meta-chip">
-              <AppIcon name="globe" color="#7e7e84" :size="26" />
+              <AppIcon name="globe" color="#8e8e94" :size="26" />
               <text>国漫</text>
             </view>
           </view>

@@ -1,4 +1,11 @@
 /* 追番助手 · 静态原型样式 */
+@font-face {
+  font-family: "NeutraText-DemiAlt";
+  src: url("assets/NeutraText-DemiAlt.otf") format("opentype");
+  font-weight: 400 600;
+  font-display: swap;
+}
+
 :root {
   --ink: #111114;
   --ink-2: #34343a;
@@ -8,7 +15,7 @@
   --soft-2: #f7f7f8;
   --card: #ffffff;
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  --font-num: "NeutraText-DemiAlt", "NeutraText", "Century Gothic", "Avenir Next", "Futura", "Trebuchet MS", sans-serif;
+  --font-num: "NeutraText-DemiAlt", "NeutraText", "Neutra Text Light Alt", "Century Gothic", "Avenir Next", "Futura", "Trebuchet MS", sans-serif;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -36,7 +43,7 @@ img { display: block; }
   height: 22px;
   display: block;
   fill: none;
-  stroke: currentColor;
+  stroke: #8e8e94;
   stroke-width: 1.5;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -764,6 +771,7 @@ img { display: block; }
 }
 .act-btn .ico { width: 19px; height: 19px; }
 .act-btn.active { background: #161618; color: #fff; }
+.act-btn.active .ico { stroke: #fff; }
 .act-btn:active { transform: scale(0.97); }
 
 .detail-section { padding: 28px 20px 0; }

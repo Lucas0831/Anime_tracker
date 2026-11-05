@@ -13,11 +13,11 @@
           <text class="hero-title">{{ anime.title }}</text>
           <view class="hero-meta">
             <view class="meta-line">
-              <AppIcon name="clock" color="#5f5f65" :size="33" />
+              <AppIcon name="clock" color="#8e8e94" :size="33" />
               <text>{{ anime.totalEps }}集</text>
             </view>
             <view class="meta-line">
-              <AppIcon name="broadcast" color="#5f5f65" :size="33" />
+              <AppIcon name="broadcast" color="#8e8e94" :size="33" />
               <text>{{ anime.status }}</text>
             </view>
           </view>
@@ -56,7 +56,7 @@
           :aria-label="b.label"
           @tap="handleAction(b)"
         >
-          <AppIcon :name="b.ico" :color="b.active ? '#ffffff' : '#a2a2a8'" :size="37" />
+          <AppIcon :name="b.ico" :color="b.active ? '#ffffff' : '#8e8e94'" :size="37" />
         </view>
       </view>
     </view>
@@ -64,7 +64,7 @@
     <view id="detail-info" class="detail-section">
       <text class="section-h2">信息</text>
       <view class="origin-badge" :class="origin.cls">
-        <AppIcon name="book" :color="origin.color" :size="29" />
+        <AppIcon name="book" color="#8e8e94" :size="29" />
         <text>{{ origin.label }}</text>
       </view>
       <view class="info-table">
@@ -87,7 +87,7 @@
       <view class="tag-cloud">
         <text v-for="t in visibleTags" :key="t" class="tag-pill">{{ t }}</text>
         <view v-if="allTags.length > 6" class="more-tags" @tap="state.tagsOpen = !state.tagsOpen">
-          <AppIcon name="plus" color="#56565c" :size="25" />
+          <AppIcon name="plus" color="#8e8e94" :size="25" />
           <text>{{ state.tagsOpen ? '收起' : '更多' }}</text>
         </view>
       </view>

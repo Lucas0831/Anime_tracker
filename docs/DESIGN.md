@@ -108,8 +108,8 @@
 | 辅助文本 | `--muted: #8e8e94` |
 | 分割线 / 浅底 | `--line: #ececee` / `--soft: #f4f4f5`、`--soft-2: #f7f7f8` |
 | 背景 | 页面白色；桌面舞台为浅灰径向渐变 |
-| 字体 | 正文 `-apple-system, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei"`；数字 `"NeutraText-DemiAlt", "NeutraText", "Century Gothic", "Avenir Next", "Futura", "Trebuchet MS"` |
-| 图标 | 内联 SVG，24 × 24 viewBox，统一线宽 1.5，圆角线帽，仅用描边不用填充 |
+| 字体 | 正文 `-apple-system, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei"`；数字 `"NeutraText-DemiAlt", "NeutraText", "Neutra Text Light Alt", "Century Gothic", "Avenir Next", "Futura", "Trebuchet MS"` |
+| 图标 | 内联 SVG，24 × 24 viewBox，统一线宽 1.5，圆角线帽，仅用描边不用填充；默认颜色 `#8e8e94`（深色底上使用白色） |
 | 圆角 | 卡片 12~18px，胶囊 999px，手机壳 34px |
 | 海报尺寸 | 时间线 80×108、列表 78×100、网格封面 378:442、详情 118×164 |
 | 布局 | 移动优先；桌面手机壳 420 × 860，视口 ≤ 520px 时全屏 |
@@ -172,7 +172,7 @@ window.SEARCH_HISTORY: string[]                 // 搜索历史初始数据
 - 样式按 390 设计宽等比换算为 `rpx`（750 设计宽），移动端比例与原型一致。
 - 图标由内联 SVG 路径生成 `data:image/svg+xml`，作为 `.app-ico` 背景图渲染，统一 1.5 线宽。
 - 状态存放在 `src/store.js` 的 `reactive` 单例中，仅内存保存；搜索历史、当前视图与日期在页面间共享。
-- 海报复制到 `src/static/`，数据中的 `poster` 指向 `/static/<id>.jpg`。
+- 数字字体 NeutraText-DemiAlt 以 base64 `@font-face` 内嵌在 `src/styles/app.css`，确保 H5 与小程序端一致；原型使用 `assets/` 下的本地字体文件。
 
 ## 10. 已知限制（原型阶段）
 

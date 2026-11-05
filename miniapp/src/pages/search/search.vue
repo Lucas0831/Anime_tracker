@@ -6,7 +6,7 @@
           <AppIcon name="back" :size="42" />
         </view>
         <view class="search-box">
-          <AppIcon name="search" color="#8c8c92" :size="35" />
+          <AppIcon name="search" color="#8e8e94" :size="35" />
           <input
             class="search-input"
             type="text"
@@ -18,7 +18,7 @@
             @confirm="onConfirm"
           />
           <view v-show="state.q" class="search-clear" aria-label="清空搜索" @tap="state.q = ''">
-            <AppIcon name="x" color="#96969c" :size="31" />
+            <AppIcon name="x" color="#8e8e94" :size="31" />
           </view>
         </view>
       </view>
