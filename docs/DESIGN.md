@@ -150,10 +150,12 @@
 
 ## 7. 数据模型
 
-数据全部位于本地文件，无网络请求：
+数据默认来自本地文件，云数据库可用时整体替换为云端数据（失败自动回退本地）：
 
 - 原型：`prototype/data.js`，挂载在 `window` 上；
-- 小程序：`miniapp/src/data/anime.js`，以 ES Module 导出。
+- 小程序：`miniapp/src/data/anime.js`（本地兜底），`miniapp/src/cloud/`（云查询与字段映射）。
+- 云数据库：`anime`（番剧主表）、`airing_schedule`（分集放送时间表）、`sync_state`（同步状态）、`match_review`（中文名审核）。
+- 集合字段、接口来源与映射明细见 [字段与接口来源文档](./字段接口来源文档.md)。
 
 ```text
 window.WEEK:        [{ label, md, date }] × 7   // 周日期
@@ -204,10 +206,13 @@ window.SEARCH_HISTORY: string[]                 // 搜索历史初始数据
 - 样式按 390 设计宽等比换算为 `rpx`（750 设计宽），移动端比例与原型一致。
 - 图标由内联 SVG 路径生成 `data:image/svg+xml`，作为 `.app-ico` 背景图渲染，统一 1.5 线宽。
 - 状态存放在 `src/store.js` 的 `reactive` 单例中，仅内存保存；搜索历史、当前视图与日期在页面间共享。
+- 云开发：`App.vue` 启动时 `initCloud()` 初始化 `wx.cloud`，`loadAnime()` 拉取 `anime` 集合；`src/cloud/index.js` 优先调用云函数 `animeApi`（`list` / `detail` / `week`），失败后直查数据库，仍失败则保留本地假数据。
+- 云函数源码位于 `miniapp/cloudfunctions/animeApi/`，构建时同步到小程序产物 `cloudfunctions/`，由微信开发者工具上传部署。
+- 云环境 ID 通过 `.env.local` 的 `VITE_CLOUD_ENV` 注入，不写入仓库；未配置时使用默认云环境。
 - 数字字体 NeutraText-DemiAlt 以 base64 `@font-face` 内嵌在 `src/styles/app.css`，确保 H5 与小程序端一致；原型使用 `assets/` 下的本地字体文件。
 
 ## 10. 已知限制（原型阶段）
 
-- 数据为静态假数据，刷新即重置，无持久化、无真实接口、无登录。
+- 数据为静态假数据与云数据库双通道：云查询失败或 H5 预览时回退本地数据，刷新即重置，无持久化、无登录。
 - PRD 边界内的个人追番管理、外部联动、视频与社区不实现。
-- 小程序前端尚未接入云开发与真实数据；`.env`、AppID 与云环境需在正式接入时补充。
+- 云函数需在微信开发者工具手动上传部署；仓库不提交 AppID 与云环境 ID。

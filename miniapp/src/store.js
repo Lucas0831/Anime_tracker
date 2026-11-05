@@ -1,5 +1,6 @@
 import { reactive } from 'vue';
-import { WEEK, TODAY_INDEX, ANIME, SEARCH_HISTORY } from './data/anime';
+import { WEEK, TODAY_INDEX, ANIME as SEED_ANIME, SEARCH_HISTORY } from './data/anime';
+import { fetchAnimeList } from './cloud';
 
 export const FILTERS = [
   { key: 'all', label: '全部', icon: 'layers' },
@@ -19,11 +20,40 @@ export const state = reactive({
   filter: 'all',
   q: '',
   tagsOpen: false,
-  history: SEARCH_HISTORY.slice()
+  history: SEARCH_HISTORY.slice(),
+  // 数据源：默认本地假数据，云数据库可用时整体替换
+  anime: SEED_ANIME.slice(),
+  source: 'local',
+  loading: false,
+  error: ''
 });
 
+// 拉取云数据库番剧列表，失败则保留本地数据
+export async function loadAnime(force) {
+  if (state.loading) return state.anime;
+  if (!force && state.source === 'cloud') return state.anime;
+  state.loading = true;
+  state.error = '';
+  try {
+    const list = await fetchAnimeList();
+    if (list && list.length) {
+      state.anime = list;
+      state.source = 'cloud';
+    } else {
+      state.source = 'local';
+    }
+  } catch (e) {
+    state.source = 'local';
+    state.error = (e && e.message) || '云数据加载失败';
+    console.warn('[cloud] 加载失败，继续使用本地数据', e);
+  } finally {
+    state.loading = false;
+  }
+  return state.anime;
+}
+
 export function byId(id) {
-  return ANIME.filter((a) => a.id === id)[0];
+  return state.anime.filter((a) => a.id === id)[0];
 }
 
 export function passes(a, filter) {
@@ -33,7 +63,7 @@ export function passes(a, filter) {
 }
 
 export function showsForDay(day, filter) {
-  return ANIME.filter((a) => a.day === day && passes(a, filter))
+  return state.anime.filter((a) => a.day === day && passes(a, filter))
     .sort((a, b) => a.time.localeCompare(b.time));
 }
 
@@ -60,7 +90,7 @@ export function rememberQuery(q) {
 export function searchAnime(q) {
   const keyword = String(q || '').trim().toLowerCase();
   if (!keyword) return [];
-  return ANIME.filter((a) => {
+  return state.anime.filter((a) => {
     const pool = [a.title, a.jp, a.studio, a.season, a.category === 'guochuang' ? '国创 国漫' : '番剧']
       .concat(a.tags, a.extraTags || [], a.genres)
       .join(' ')
@@ -69,4 +99,4 @@ export function searchAnime(q) {
   });
 }
 
-export { WEEK, TODAY_INDEX, ANIME };
+export { WEEK, TODAY_INDEX };

@@ -1,6 +1,12 @@
 <script>
+  import { initCloud } from './cloud';
+  import { loadAnime } from './store';
+
   export default {
-    onLaunch() {},
+    onLaunch() {
+      initCloud();
+      loadAnime();
+    },
     onShow() {},
     onHide() {}
   };

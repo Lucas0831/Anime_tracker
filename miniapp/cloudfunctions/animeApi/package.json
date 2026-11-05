@@ -1,0 +1,9 @@
+{
+  "name": "anime-api",
+  "version": "1.0.0",
+  "description": "追番助手云函数：查询 anime 与 airing_schedule 集合",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

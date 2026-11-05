@@ -8,6 +8,8 @@
 ### 新增
 
 - 新增 `miniapp/`：uni-app + Vue 3 + Vite 小程序前端，可构建 `mp-weixin`，H5 用于本地预览
+- 小程序接入微信云开发：`App.vue` 启动时初始化 `wx.cloud`，`src/cloud/` 负责云查询与字段映射，云端不可用时回退本地假数据
+- 新增云函数 `animeApi`（`list` / `detail` / `week`），构建时自动同步到小程序产物 `cloudfunctions/`
 - 3 个页面路由承载 5 个界面：`pages/index/index`（时间线 / 列表 / 网格）、`pages/search/search`、`pages/detail/detail`
 - 本地假数据以 ES Module 复用，海报复制到 `src/static/`；图标改为 SVG data URI 线性图标
 - 时间线 / 列表 / 网格页支持横向滑动切换日期：左滑到下一天、右滑到上一天，首尾日期不循环（原型与小程序一致）

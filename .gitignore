@@ -11,3 +11,5 @@ origin_photo/
 # uni-app 小程序前端依赖与构建产物
 miniapp/node_modules/
 miniapp/dist/
+miniapp/.env.local
+miniapp/cloudfunctions/**/node_modules/
