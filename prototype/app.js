@@ -3,7 +3,6 @@
   'use strict';
 
   var viewport = document.getElementById('viewport');
-  var toastEl = document.getElementById('toast');
   var state = {
     view: 'timeline',
     day: window.TODAY_INDEX || 0,
@@ -36,9 +35,6 @@
     clock: '<circle cx="12" cy="12" r="8.3"/><path d="M12 7.7V12l2.9 1.8"/>',
     broadcast: '<circle cx="12" cy="12" r="1.7"/><path d="M8.4 8.6a5 5 0 0 0 0 6.8M15.6 8.6a5 5 0 0 1 0 6.8M5.7 5.9a8.5 8.5 0 0 0 0 12.2M18.3 5.9a8.5 8.5 0 0 1 0 12.2"/>',
     globe: '<circle cx="12" cy="12" r="8.3"/><path d="M3.7 12h16.6M12 3.7c2.5 2.6 3.7 5.4 3.7 8.3S14.5 17.7 12 20.3c-2.5-2.6-3.7-5.4-3.7-8.3S9.5 6.3 12 3.7z"/>',
-    users: '<circle cx="9" cy="8.5" r="3"/><path d="M3.5 19c.5-3.2 2.6-5 5.5-5s5 1.8 5.5 5"/><path d="M15.2 5.9a3 3 0 0 1 0 5.4M16.8 14.2c2.1.4 3.4 2 3.7 4.3"/>',
-    shuffle: '<path d="M4 7h3.4c1.4 0 2.6.8 3.3 2l3 5.6c.7 1.2 1.9 2 3.3 2H20"/><path d="M4 17h3.4c1.4 0 2.6-.8 3.3-2L14 9.4c.7-1.2 1.9-2 3.3-2H20"/><path d="M17.2 4.9L20 7.4l-2.8 2.5M17.2 14.9L20 17.4l-2.8 2.5"/>',
-    info: '<circle cx="12" cy="12" r="8.3"/><path d="M12 11v5.2M12 7.8v.2"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
     arrowUp: '<path d="M12 19V5M6.5 10.5L12 5l5.5 5.5"/>',
     book: '<path d="M4.5 5.5c2.4-.8 4.6-.3 7.5 1.2v12c-2.9-1.5-5.1-2-7.5-1.2zM19.5 5.5c-2.4-.8-4.6-.3-7.5 1.2v12c2.9-1.5 5.1-2 7.5-1.2z"/>',
@@ -71,17 +67,6 @@
 
   function dayStatus(a) {
     return a.day <= window.TODAY_INDEX ? '已播' : '待播';
-  }
-
-  function ratingText(n) {
-    return Number.isInteger(n) ? n.toFixed(1) : String(n);
-  }
-
-  function showToast(msg) {
-    toastEl.textContent = msg;
-    toastEl.classList.add('show');
-    clearTimeout(showToast.timer);
-    showToast.timer = setTimeout(function () { toastEl.classList.remove('show'); }, 2200);
   }
 
   function header() {
@@ -174,7 +159,8 @@
     var body = items.length
       ? timelineGroups(items)
       : emptyState(state.filter === 'all' ? 'day' : 'filter');
-    return '<div class="page page-timeline">' + header() + weekStrip() + dayBar() +
+    return '<div class="page page-timeline">' +
+      '<div class="top-bar">' + header() + weekStrip() + dayBar() + '</div>' +
       '<div class="timeline-wrap' + (items.length ? '' : ' is-empty') + '">' + body + '</div><div class="page-pad"></div></div>';
   }
 
@@ -296,7 +282,6 @@
     var allTags = a.tags.concat(a.extraTags || []);
     var visibleTags = state.tagsOpen ? allTags : allTags.slice(0, 6);
     var next = a.next;
-    var ratingLabels = ['MAL评分', 'Bangumi评分', 'AS评分', 'TMDB评分'];
     var rows = [
       ['集数', a.totalEps],
       ['季度', a.season],
@@ -306,11 +291,6 @@
       ['放送时段', window.WEEK[a.day].label + ' ' + a.time]
     ];
     var origin = originInfo(a);
-    var actionBtns = [
-      { ico: 'i-info', action: 'scroll-info', label: '作品信息', active: true },
-      { ico: 'i-users', action: 'demo', label: '角色列表', msg: '角色列表为演示占位，未接入真实数据' },
-      { ico: 'i-shuffle', action: 'demo', label: '相关推荐', msg: '相关推荐为演示占位，未接入真实数据' }
-    ];
     return '<div class="page page-detail">' +
       '<div class="detail-hero">' +
         '<div class="hero-blur" style="background-image:url(\'' + esc(a.poster) + '\')"></div>' +
@@ -324,21 +304,15 @@
             '<div class="hero-meta"><span class="meta-line">' + icon('i-clock') + a.totalEps + '集</span><span class="meta-line">' + icon('i-broadcast') + a.status + '</span></div>' +
           '</div>' +
         '</div>' +
-        '<div class="ratings">' + a.ratings.map(function (v, i) {
-          return '<div class="rating"><b>' + ratingText(v) + '</b><span>' + ratingLabels[i] + '</span></div>';
-        }).join('') + '</div>' +
         '<div class="next-card">' +
           '<div class="next-ico">' + icon('i-clock') + '</div>' +
           '<div class="next-main"><div class="next-title">下一集 <b>第' + next.ep + '集</b> / 共' + next.total + '集</div><div class="next-sub">' + esc(next.date) + ' 放送（北京时间）</div></div>' +
           '<div class="next-right"><span>距开播</span><b>' + esc(next.countdown) + '</b></div>' +
         '</div>' +
         '<p class="synopsis">' + esc(a.synopsis) + '</p>' +
-        '<div class="detail-actions">' + actionBtns.map(function (b) {
-          return '<button class="act-btn' + (b.active ? ' active' : '') + '" data-action="' + b.action + '"' + (b.msg ? ' data-msg="' + b.msg + '"' : '') + ' aria-label="' + b.label + '">' + icon(b.ico) + '</button>';
-        }).join('') + '</div>' +
       '</div>' +
 
-      '<section class="detail-section" id="detail-info">' +
+      '<section class="detail-section">' +
         '<h2>信息</h2>' +
         '<div class="origin-badge ' + origin.cls + '">' + icon('i-book') + origin.label + '</div>' +
         '<dl class="info-table">' + rows.map(function (r) {
@@ -454,6 +428,15 @@
     navigate(next);
   }
 
+  var DAY_VIEWS = { timeline: true, list: true, grid: true };
+
+  function setDay(day) {
+    var next = Math.max(0, Math.min(window.WEEK.length - 1, day));
+    if (next === state.day) return;
+    state.day = next;
+    renderAndTop();
+  }
+
   window.addEventListener('hashchange', function () {
     applyRoute();
     renderAndTop();
@@ -475,8 +458,7 @@
     } else if (action === 'back') {
       goBack();
     } else if (action === 'day') {
-      state.day = parseInt(target.getAttribute('data-day'), 10) || 0;
-      renderAndTop();
+      setDay(parseInt(target.getAttribute('data-day'), 10) || 0);
     } else if (action === 'filter') {
       state.filter = target.getAttribute('data-filter');
       renderKeepScroll();
@@ -495,15 +477,33 @@
     } else if (action === 'expand-tags') {
       state.tagsOpen = !state.tagsOpen;
       renderKeepScroll();
-    } else if (action === 'scroll-info') {
-      var info = document.getElementById('detail-info');
-      if (info) info.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else if (action === 'top') {
       viewport.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (action === 'demo') {
-      showToast(target.getAttribute('data-msg') || '该能力为原型占位');
     }
   });
+
+  var swipeStart = null;
+
+  viewport.addEventListener('touchstart', function (e) {
+    if (!DAY_VIEWS[state.view] || e.touches.length !== 1) { swipeStart = null; return; }
+    swipeStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, { passive: true });
+
+  viewport.addEventListener('touchend', function (e) {
+    var start = swipeStart;
+    swipeStart = null;
+    if (!start || !DAY_VIEWS[state.view] || !e.changedTouches.length) return;
+    var t = e.changedTouches[0];
+    var dx = t.clientX - start.x;
+    var dy = t.clientY - start.y;
+    // 横向位移超过 56px 且明显大于纵向位移才切换日期，避免干扰纵向滚动与点击
+    if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
+    setDay(state.day + (dx < 0 ? 1 : -1));
+  }, { passive: true });
+
+  viewport.addEventListener('touchcancel', function () {
+    swipeStart = null;
+  }, { passive: true });
 
   viewport.addEventListener('input', function (e) {
     if (e.target && e.target.id === 'search-input') {

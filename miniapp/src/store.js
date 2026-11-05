@@ -41,10 +41,6 @@ export function dayStatus(a) {
   return a.day <= TODAY_INDEX ? '已播' : '待播';
 }
 
-export function ratingText(n) {
-  return Number.isInteger(n) ? n.toFixed(1) : String(n);
-}
-
 export function originInfo(a) {
   if (a.tags.indexOf('漫画改') > -1 || a.tags.indexOf('漫改') > -1) {
     return { label: '漫画改编', cls: 'origin-manga', color: '#7b5cc8' };

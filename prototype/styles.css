@@ -117,6 +117,14 @@ img { display: block; }
 }
 .page-pad { height: calc(28px + env(safe-area-inset-bottom)); }
 
+/* 时间线顶栏区块：标题、周日期条、日期栏合并为一个整体固定，避免分块吸顶产生缝隙 */
+.top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+.top-bar .app-header { position: static; }
+
 /* ---------- Header ---------- */
 .app-header {
   position: sticky;
@@ -212,9 +220,6 @@ img { display: block; }
 
 /* ---------- Timeline day bar & filters ---------- */
 .day-bar {
-  position: sticky;
-  top: 56px;
-  z-index: 20;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -276,9 +281,20 @@ img { display: block; }
 .timeline-wrap.is-empty::before { display: none; }
 .tl-group {
   position: relative;
-  padding: 12px 0 8px 86px;
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr);
+  padding: 12px 0 8px;
 }
-.tl-rail { position: absolute; left: 0; top: 10px; width: 100px; height: 22px; }
+/* 时间节点吸顶：当前分组的时间点停在日期栏下方，下一时间点从下方顶出旧节点 */
+.tl-rail {
+  position: sticky;
+  top: 192px;
+  align-self: start;
+  z-index: 20;
+  margin-top: -2px;
+  width: 100px;
+  height: 22px;
+}
 .tl-dot {
   position: absolute;
   left: 22px;
@@ -299,7 +315,7 @@ img { display: block; }
   color: #26262a;
   white-space: nowrap;
 }
-.tl-items { display: flex; flex-direction: column; gap: 18px; }
+.tl-items { grid-column: 2; display: flex; flex-direction: column; gap: 18px; }
 .tl-item {
   display: grid;
   grid-template-columns: 80px minmax(0, 1fr);
@@ -594,6 +610,8 @@ img { display: block; }
 
 /* ---------- Detail ---------- */
 .page-detail { background: #fff; }
+/* 详情页底部预留回到顶部按钮的空间，避免最后一行标签被悬浮按钮遮挡 */
+.page-detail .page-pad { height: calc(86px + env(safe-area-inset-bottom)); }
 .detail-hero {
   position: relative;
   overflow: hidden;
@@ -680,27 +698,6 @@ img { display: block; }
 }
 .meta-line .ico { width: 17px; height: 17px; color: #5f5f65; }
 
-.ratings {
-  position: relative;
-  z-index: 3;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  margin-top: 24px;
-  padding-top: 3px;
-}
-.rating { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.rating + .rating::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 5px;
-  bottom: 5px;
-  width: 1px;
-  background: #e9e9ec;
-}
-.rating b { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
-.rating span { font-size: 11px; color: #909096; white-space: nowrap; }
-
 .next-card {
   position: relative;
   z-index: 3;
@@ -751,29 +748,6 @@ img { display: block; }
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.detail-actions {
-  position: relative;
-  z-index: 3;
-  display: flex;
-  gap: 9px;
-  margin: 26px 0 10px;
-}
-.act-btn {
-  flex: 1;
-  height: 46px;
-  min-width: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 999px;
-  background: #f2f2f3;
-  color: #a2a2a8;
-  transition: transform 0.15s, background 0.15s;
-}
-.act-btn .ico { width: 19px; height: 19px; }
-.act-btn.active { background: #161618; color: #fff; }
-.act-btn.active .ico { stroke: #fff; }
-.act-btn:active { transform: scale(0.97); }
-
 .detail-section { padding: 28px 20px 0; }
 .detail-section h2 {
   margin: 0 0 14px;
@@ -856,29 +830,6 @@ img { display: block; }
   box-shadow: 0 7px 20px rgba(20, 20, 30, 0.16);
 }
 .to-top .ico { width: 20px; height: 20px; }
-
-/* ---------- Toast ---------- */
-.toast {
-  position: absolute;
-  left: 50%;
-  bottom: calc(30px + env(safe-area-inset-bottom));
-  z-index: 90;
-  max-width: calc(100% - 48px);
-  padding: 10px 16px;
-  border-radius: 999px;
-  background: rgba(20, 20, 24, 0.9);
-  color: #fff;
-  font-size: 12.5px;
-  line-height: 1.5;
-  text-align: center;
-  opacity: 0;
-  pointer-events: none;
-  transform: translate(-50%, 12px);
-  transition: opacity 0.24s, transform 0.24s;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-.toast.show { opacity: 1; transform: translate(-50%, 0); }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 520px) {

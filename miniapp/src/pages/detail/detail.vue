@@ -24,13 +24,6 @@
         </view>
       </view>
 
-      <view class="ratings">
-        <view v-for="(v, i) in anime.ratings" :key="i" class="rating">
-          <text class="rating-num">{{ ratingText(v) }}</text>
-          <text class="rating-label">{{ ratingLabels[i] }}</text>
-        </view>
-      </view>
-
       <view class="next-card">
         <view class="next-ico">
           <AppIcon name="clock" :size="37" />
@@ -46,22 +39,9 @@
       </view>
 
       <text class="synopsis">{{ anime.synopsis }}</text>
-
-      <view class="detail-actions">
-        <view
-          v-for="b in actionBtns"
-          :key="b.action"
-          class="act-btn"
-          :class="{ active: b.active }"
-          :aria-label="b.label"
-          @tap="handleAction(b)"
-        >
-          <AppIcon :name="b.ico" :color="b.active ? '#ffffff' : '#8e8e94'" :size="37" />
-        </view>
-      </view>
     </view>
 
-    <view id="detail-info" class="detail-section">
+    <view class="detail-section">
       <text class="section-h2">信息</text>
       <view class="origin-badge" :class="origin.cls">
         <AppIcon name="book" color="#8e8e94" :size="29" />
@@ -86,9 +66,9 @@
       <text class="section-h2">标签</text>
       <view class="tag-cloud">
         <text v-for="t in visibleTags" :key="t" class="tag-pill">{{ t }}</text>
-        <view v-if="allTags.length > 6" class="more-tags" @tap="state.tagsOpen = !state.tagsOpen">
+        <view v-if="allTags.length > 6" class="more-tags" @tap="toggleTags">
           <AppIcon name="plus" color="#8e8e94" :size="25" />
-          <text>{{ state.tagsOpen ? '收起' : '更多' }}</text>
+          <text>{{ tagsOpen ? '收起' : '更多' }}</text>
         </view>
       </view>
     </view>
@@ -104,15 +84,15 @@
   import { computed, ref } from 'vue';
   import { onLoad } from '@dcloudio/uni-app';
   import AppIcon from '../../components/AppIcon.vue';
-  import { WEEK, state, byId, ratingText, originInfo } from '../../store';
+  import { WEEK, state, byId, originInfo } from '../../store';
 
   const detailId = ref('tenchi');
 
   const anime = computed(() => byId(detailId.value) || byId('tenchi'));
   const allTags = computed(() => anime.value.tags.concat(anime.value.extraTags || []));
-  const visibleTags = computed(() => (state.tagsOpen ? allTags.value : allTags.value.slice(0, 6)));
+  const tagsOpen = computed(() => state.tagsOpen);
+  const visibleTags = computed(() => (tagsOpen.value ? allTags.value : allTags.value.slice(0, 6)));
   const origin = computed(() => originInfo(anime.value));
-  const ratingLabels = ['MAL评分', 'Bangumi评分', 'AS评分', 'TMDB评分'];
 
   const rows = computed(() => [
     ['集数', anime.value.totalEps],
@@ -123,23 +103,13 @@
     ['放送时段', WEEK[anime.value.day].label + ' ' + anime.value.time]
   ]);
 
-  const actionBtns = [
-    { ico: 'info', action: 'scroll-info', label: '作品信息', active: true },
-    { ico: 'users', action: 'demo', label: '角色列表', msg: '角色列表为演示占位，未接入真实数据' },
-    { ico: 'shuffle', action: 'demo', label: '相关推荐', msg: '相关推荐为演示占位，未接入真实数据' }
-  ];
-
   onLoad((options) => {
     if (options && options.id) detailId.value = options.id;
     state.tagsOpen = false;
   });
 
-  function handleAction(b) {
-    if (b.action === 'scroll-info') {
-      uni.pageScrollTo({ selector: '#detail-info', duration: 250 });
-      return;
-    }
-    uni.showToast({ title: b.msg, icon: 'none' });
+  function toggleTags() {
+    state.tagsOpen = !state.tagsOpen;
   }
 
   function toTop() {

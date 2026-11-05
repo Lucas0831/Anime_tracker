@@ -56,8 +56,6 @@ image { display: block; }
 .history-empty,
 .synopsis,
 .next-sub,
-.rating-num,
-.rating-label,
 .search-row-meta text,
 .next-cap,
 .next-count {
@@ -72,7 +70,6 @@ image { display: block; }
 .grid-time,
 .meta-chip,
 .hero-meta .meta-line,
-.rating-num,
 .next-title,
 .next-sub,
 .next-count,
@@ -93,6 +90,14 @@ image { display: block; }
   to { opacity: 1; transform: translateY(0); }
 }
 .page-pad { height: calc(53.85rpx + env(safe-area-inset-bottom)); }
+
+/* 时间线顶栏区块：标题、周日期条、日期栏合并为一个整体固定，避免分块吸顶产生缝隙 */
+.top-bar.is-fixed {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+.top-bar.is-fixed .app-header { position: static; }
 
 /* ---------- Header ---------- */
 .app-header {
@@ -195,9 +200,6 @@ image { display: block; }
 
 /* ---------- Timeline day bar & filters ---------- */
 .day-bar {
-  position: sticky;
-  top: calc(107.69rpx + var(--status-bar-height, 0px));
-  z-index: 20;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -259,9 +261,20 @@ image { display: block; }
 .timeline-wrap.is-empty::before { display: none; }
 .tl-group {
   position: relative;
-  padding: 23.08rpx 0 15.38rpx 165.38rpx;
+  display: grid;
+  grid-template-columns: 165.38rpx minmax(0, 1fr);
+  padding: 23.08rpx 0 15.38rpx;
 }
-.tl-rail { position: absolute; left: 0; top: 19.23rpx; width: 192.31rpx; height: 42.31rpx; }
+/* 时间节点吸顶：当前分组的时间点停在日期栏下方，下一时间点从下方顶出旧节点 */
+.tl-rail {
+  position: sticky;
+  top: calc(var(--status-bar-height, 0px) + 368.7rpx);
+  align-self: start;
+  z-index: 20;
+  margin-top: -3.85rpx;
+  width: 192.31rpx;
+  height: 42.31rpx;
+}
 .tl-dot {
   position: absolute;
   left: 42.31rpx;
@@ -282,7 +295,7 @@ image { display: block; }
   color: #26262a;
   white-space: nowrap;
 }
-.tl-items { display: flex; flex-direction: column; gap: 34.62rpx; }
+.tl-items { grid-column: 2; display: flex; flex-direction: column; gap: 34.62rpx; }
 .tl-item {
   display: grid;
   grid-template-columns: 153.85rpx minmax(0, 1fr);
@@ -588,6 +601,8 @@ image { display: block; }
   background: #fff;
   padding-top: var(--status-bar-height, 0px);
 }
+/* 详情页底部预留回到顶部按钮的空间，避免最后一行标签被悬浮按钮遮挡 */
+.page-detail .page-pad { height: calc(160rpx + env(safe-area-inset-bottom)); }
 .detail-hero {
   position: relative;
   overflow: hidden;
@@ -674,27 +689,6 @@ image { display: block; }
 }
 .meta-line .app-ico { width: 32.69rpx; height: 32.69rpx; color: #5f5f65; }
 
-.ratings {
-  position: relative;
-  z-index: 3;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  margin-top: 46.15rpx;
-  padding-top: 5.77rpx;
-}
-.rating { position: relative; display: flex; flex-direction: column; align-items: center; gap: 11.54rpx; }
-.rating + .rating::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 9.62rpx;
-  bottom: 9.62rpx;
-  width: 1.92rpx;
-  background: #e9e9ec;
-}
-.rating-num { font-size: 38.46rpx; font-weight: 600; letter-spacing: -0.01em; }
-.rating-label { font-size: 21.15rpx; color: #909096; white-space: nowrap; }
-
 .next-card {
   position: relative;
   z-index: 3;
@@ -745,28 +739,6 @@ image { display: block; }
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.detail-actions {
-  position: relative;
-  z-index: 3;
-  display: flex;
-  gap: 17.31rpx;
-  margin: 50rpx 0 19.23rpx;
-}
-.act-btn {
-  flex: 1;
-  height: 88.46rpx;
-  min-width: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 1921.15rpx;
-  background: #f2f2f3;
-  color: #a2a2a8;
-  transition: transform 0.15s, background 0.15s;
-}
-.act-btn .app-ico { width: 36.54rpx; height: 36.54rpx; }
-.act-btn.active { background: #161618; color: #fff; }
-.act-btn:active { transform: scale(0.97); }
-
 .detail-section { padding: 53.85rpx 38.46rpx 0; }
 .section-h2 {
   margin: 0 0 26.92rpx;
@@ -849,27 +821,4 @@ image { display: block; }
   box-shadow: 0 13.46rpx 38.46rpx rgba(20, 20, 30, 0.16);
 }
 .to-top .app-ico { width: 38.46rpx; height: 38.46rpx; }
-
-/* ---------- Toast ---------- */
-.toast {
-  position: absolute;
-  left: 50%;
-  bottom: calc(57.69rpx + env(safe-area-inset-bottom));
-  z-index: 90;
-  max-width: calc(100% - 92.31rpx);
-  padding: 19.23rpx 30.77rpx;
-  border-radius: 1921.15rpx;
-  background: rgba(20, 20, 24, 0.9);
-  color: #fff;
-  font-size: 24.04rpx;
-  line-height: 1.5;
-  text-align: center;
-  opacity: 0;
-  pointer-events: none;
-  transform: translate(-50%, 23.08rpx);
-  transition: opacity 0.24s, transform 0.24s;
-  backdrop-filter: blur(15.38rpx);
-  -webkit-backdrop-filter: blur(15.38rpx);
-}
-.toast.show { opacity: 1; transform: translate(-50%, 0); }
 

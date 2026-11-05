@@ -1,55 +1,63 @@
 <template>
-  <view class="page" :class="pageClass">
-    <view class="app-header">
-      <view class="header-row">
-        <view class="icon-btn" :aria-label="mode.label" @tap="switchView">
-          <AppIcon :name="mode.icon" :size="42" />
+  <view
+    class="page"
+    :class="pageClass"
+    @touchstart="onTouchStart"
+    @touchend="onTouchEnd"
+    @touchcancel="onTouchCancel"
+  >
+    <view class="top-bar" :class="{ 'is-fixed': state.view === 'timeline' }">
+      <view class="app-header">
+        <view class="header-row">
+          <view class="icon-btn" :aria-label="mode.label" @tap="switchView">
+            <AppIcon :name="mode.icon" :size="42" />
+          </view>
+          <text class="app-title">{{ mode.title }}</text>
+          <view class="icon-btn" aria-label="搜索番剧" @tap="openSearch">
+            <AppIcon name="search" :size="42" />
+          </view>
         </view>
-        <text class="app-title">{{ mode.title }}</text>
-        <view class="icon-btn" aria-label="搜索番剧" @tap="openSearch">
-          <AppIcon name="search" :size="42" />
-        </view>
       </view>
-    </view>
 
-    <view v-if="state.view === 'timeline'" class="week-strip" aria-label="本周日期">
-      <view
-        v-for="(d, i) in WEEK"
-        :key="d.date"
-        class="week-cell"
-        :class="{ active: i === state.day }"
-        @tap="state.day = i"
-      >
-        <text class="week-date">{{ d.md }}</text>
-        <text class="week-day">{{ d.label.slice(1) }}</text>
-        <view v-if="i === state.day" class="today-dot"></view>
-      </view>
-    </view>
-
-    <view v-else class="week-chips" aria-label="本周日期">
-      <view
-        v-for="(d, i) in WEEK"
-        :key="d.date"
-        class="week-chip"
-        :class="{ active: i === state.day }"
-        @tap="state.day = i"
-      >{{ d.label }}</view>
-    </view>
-
-    <view v-if="state.view === 'timeline'" class="day-bar">
-      <view class="day-label">
-        <view class="day-dot"></view>
-        <text class="day-name">{{ WEEK[state.day].label }}</text>
-        <text class="day-md">{{ WEEK[state.day].md }}</text>
-      </view>
-      <view class="filters" role="group" aria-label="筛选">
+      <view v-if="state.view === 'timeline'" class="week-strip" aria-label="本周日期">
         <view
-          v-for="f in FILTERS"
-          :key="f.key"
-          class="filter"
-          :class="{ active: state.filter === f.key }"
-          @tap="state.filter = f.key"
-        >{{ f.label }}</view>
+          v-for="(d, i) in WEEK"
+          :key="d.date"
+          class="week-cell"
+          :class="{ active: i === state.day }"
+          @tap="state.day = i"
+        >
+          <text class="week-date">{{ d.md }}</text>
+          <text class="week-day">{{ d.label.slice(1) }}</text>
+          <view v-if="i === state.day" class="today-dot"></view>
+        </view>
+      </view>
+
+      <view v-else class="week-chips" aria-label="本周日期">
+        <view
+          v-for="(d, i) in WEEK"
+          :key="d.date"
+          class="week-chip"
+          :class="{ active: i === state.day }"
+          @tap="state.day = i"
+        >{{ d.label }}</view>
+      </view>
+
+      <view v-if="state.view === 'timeline'" class="day-bar">
+        <view class="day-label">
+          <view class="day-dot"></view>
+          <text class="day-name">{{ WEEK[state.day].label }}</text>
+          <text class="day-md">{{ WEEK[state.day].md }}</text>
+        </view>
+        <view class="filters" role="group" aria-label="筛选">
+          <view
+            v-for="f in FILTERS"
+            :key="f.key"
+            class="filter"
+            :class="{ active: state.filter === f.key }"
+            @tap="state.filter = f.key"
+          >{{ f.label }}</view>
+        </view>
       </view>
     </view>
 
@@ -171,5 +179,33 @@
 
   function openDetail(id) {
     uni.navigateTo({ url: '/pages/detail/detail?id=' + id });
+  }
+
+  let swipeStart = null;
+
+  function setDay(day) {
+    state.day = Math.max(0, Math.min(WEEK.length - 1, day));
+  }
+
+  function onTouchStart(e) {
+    const t = e.touches && e.touches[0];
+    swipeStart = t ? { x: t.clientX, y: t.clientY } : null;
+  }
+
+  function onTouchEnd(e) {
+    const start = swipeStart;
+    swipeStart = null;
+    if (!start) return;
+    const t = e.changedTouches && e.changedTouches[0];
+    if (!t) return;
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    // 横向位移超过 56px 且明显大于纵向位移才切换日期，避免干扰纵向滚动与点击
+    if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
+    setDay(state.day + (dx < 0 ? 1 : -1));
+  }
+
+  function onTouchCancel() {
+    swipeStart = null;
   }
 </script>
