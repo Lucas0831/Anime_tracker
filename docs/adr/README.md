@@ -54,3 +54,4 @@ ADR（Architecture Decision Record，架构决策记录）用于记录**会影�
 | [0001](0001-static-html-prototype.md) | 采用纯静态 HTML/CSS/JS 单页原型 | 已接受 | 2026-11-05 |
 | [0002](0002-local-fake-data.md) | 原型阶段使用本地假数据，不接真实接口 | 已接受 | 2026-11-05 |
 | [0003](0003-hash-routing-spa.md) | 使用 hash 路由 + 集中渲染函数组织多页面 | 已接受 | 2026-11-05 |
+| [0004](0004-uni-app-vue3-miniapp.md) | 以 uni-app + Vue 3 实现小程序前端 | 已接受 | 2026-11-05 |

@@ -108,8 +108,8 @@
 | 辅助文本 | `--muted: #8e8e94` |
 | 分割线 / 浅底 | `--line: #ececee` / `--soft: #f4f4f5`、`--soft-2: #f7f7f8` |
 | 背景 | 页面白色；桌面舞台为浅灰径向渐变 |
-| 字体 | `-apple-system, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei"` |
-| 图标 | 内联 SVG，24 × 24 viewBox，线宽 1.7，圆角线帽 |
+| 字体 | 正文 `-apple-system, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei"`；数字 `"NeutraText-DemiAlt", "NeutraText", "Century Gothic", "Avenir Next", "Futura", "Trebuchet MS"` |
+| 图标 | 内联 SVG，24 × 24 viewBox，统一线宽 1.5，圆角线帽，仅用描边不用填充 |
 | 圆角 | 卡片 12~18px，胶囊 999px，手机壳 34px |
 | 海报尺寸 | 时间线 80×108、列表 78×100、网格封面 378:442、详情 118×164 |
 | 布局 | 移动优先；桌面手机壳 420 × 860，视口 ≤ 520px 时全屏 |
@@ -118,7 +118,10 @@
 
 ## 7. 数据模型
 
-数据全部位于 `prototype/data.js`，挂载在 `window` 上，无网络请求。
+数据全部位于本地文件，无网络请求：
+
+- 原型：`prototype/data.js`，挂载在 `window` 上；
+- 小程序：`miniapp/src/data/anime.js`，以 ES Module 导出。
 
 ```text
 window.WEEK:        [{ label, md, date }] × 7   // 周日期
@@ -137,7 +140,7 @@ window.SEARCH_HISTORY: string[]                 // 搜索历史初始数据
 | `ep` / `totalEps` | number | 当前集 / 总集数 |
 | `category` | `'anime' \| 'guochuang'` | 番剧 / 国创 |
 | `title` / `jp` | string | 中文名 / 日文名（国创可为空） |
-| `poster` | string | `assets/<id>.jpg` |
+| `poster` | string | 原型 `assets/<id>.jpg`；小程序 `/static/<id>.jpg` |
 | `tags` / `extraTags` | string[] | 主标签 / 扩展标签（详情「更多」） |
 | `studio` / `season` / `status` | string | 制作 / 季度 / 放送状态 |
 | `genres` | string[] | 类型（英文分类） |
@@ -156,8 +159,23 @@ window.SEARCH_HISTORY: string[]                 // 搜索历史初始数据
 - 焦点态 `:focus-visible` 使用 2px 黑色描边。
 - 图片懒加载（`loading="lazy"`），海报带 `alt`。
 
-## 9. 已知限制（原型阶段）
+## 9. 小程序实现（`miniapp/`）
+
+技术栈：uni-app + Vue 3 + Vite，目标平台微信小程序（`mp-weixin`），H5 仅用于本地预览。
+
+| 原型页面 | 小程序路由 | 说明 |
+| --- | --- | --- |
+| 时间线 / 列表 / 网格 | `pages/index/index` | 单页内通过 `view` 状态切换三种浏览方式，共享日期与筛选 |
+| 搜索 | `pages/search/search` | 独立页面，返回时保留关键词 |
+| 详情 | `pages/detail/detail?id=<id>` | 独立页面，返回来源页 |
+
+- 样式按 390 设计宽等比换算为 `rpx`（750 设计宽），移动端比例与原型一致。
+- 图标由内联 SVG 路径生成 `data:image/svg+xml`，作为 `.app-ico` 背景图渲染，统一 1.5 线宽。
+- 状态存放在 `src/store.js` 的 `reactive` 单例中，仅内存保存；搜索历史、当前视图与日期在页面间共享。
+- 海报复制到 `src/static/`，数据中的 `poster` 指向 `/static/<id>.jpg`。
+
+## 10. 已知限制（原型阶段）
 
 - 数据为静态假数据，刷新即重置，无持久化、无真实接口、无登录。
 - 角色列表、相关推荐为演示占位；PRD 边界内的个人追番管理、外部联动、视频与社区不实现。
-- 未实现小程序原生导航栏、胶囊按钮与分包加载，正式实现以 uni-app + Vue + 云开发为准。
+- 小程序前端尚未接入云开发与真实数据；`.env`、AppID 与云环境需在正式接入时补充。

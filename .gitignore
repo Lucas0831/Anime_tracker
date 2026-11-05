@@ -7,3 +7,7 @@ origin_photo/
 
 # Trae 工作区本地配置与规则
 .trae/
+
+# uni-app 小程序前端依赖与构建产物
+miniapp/node_modules/
+miniapp/dist/

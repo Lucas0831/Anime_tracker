@@ -8,6 +8,7 @@
   --soft-2: #f7f7f8;
   --card: #ffffff;
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-num: "NeutraText-DemiAlt", "NeutraText", "Century Gothic", "Avenir Next", "Futura", "Trebuchet MS", sans-serif;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -36,9 +37,28 @@ img { display: block; }
   display: block;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.7;
+  stroke-width: 1.5;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+/* 数字统一使用 NeutraText-DemiAlt（缺失时回退到近似几何无衬线） */
+.week-date,
+.day-md,
+.tl-time,
+.tl-ep,
+.grid-time,
+.meta-chip,
+.hero-meta .meta-line,
+.rating b,
+.next-title,
+.next-sub,
+.next-right b,
+.search-row-meta,
+.search-count,
+.info-row dd {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
 }
 
 .stage {
@@ -151,7 +171,7 @@ img { display: block; }
   color: #3d3d42;
   transition: color 0.15s;
 }
-.week-cell.active .week-date { color: #111; font-weight: 800; }
+.week-cell.active .week-date { color: #111; font-weight: 600; }
 .week-cell.active .week-day { color: #111; font-weight: 700; }
 .today-dot {
   position: absolute;
@@ -376,7 +396,7 @@ img { display: block; }
   color: #56565c;
   white-space: nowrap;
 }
-.meta-chip .ico { width: 13px; height: 13px; stroke-width: 1.8; color: #7e7e84; }
+.meta-chip .ico { width: 13px; height: 13px; color: #7e7e84; }
 .hash { font-weight: 600; color: #6a6a70; }
 
 /* ---------- Grid ---------- */
@@ -532,7 +552,7 @@ img { display: block; }
 .dot-sep { width: 2px; height: 2px; border-radius: 50%; background: #c6c6ca; }
 .row-chev { color: #b6b6bc; font-size: 19px; line-height: 1; padding-right: 2px; }
 .search-count { padding: 14px 2px 4px; font-size: 12px; color: #8c8c92; }
-.search-count b { color: #111; font-weight: 700; }
+.search-count b { color: #111; font-weight: 600; }
 
 /* ---------- Empty states ---------- */
 .empty-state {
@@ -671,7 +691,7 @@ img { display: block; }
   width: 1px;
   background: #e9e9ec;
 }
-.rating b { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+.rating b { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
 .rating span { font-size: 11px; color: #909096; white-space: nowrap; }
 
 .next-card {
@@ -698,7 +718,7 @@ img { display: block; }
 .next-ico .ico { width: 19px; height: 19px; }
 .next-main { flex: 1; min-width: 0; }
 .next-title { font-size: 14.5px; color: #222226; white-space: nowrap; }
-.next-title b { font-weight: 700; }
+.next-title b { font-weight: 600; }
 .next-sub {
   margin-top: 5px;
   font-size: 10.5px;
@@ -710,7 +730,7 @@ img { display: block; }
 }
 .next-right { flex: 0 0 auto; text-align: right; }
 .next-right span { display: block; font-size: 10.5px; color: #9a9aa0; }
-.next-right b { display: block; margin-top: 3px; font-size: 15.5px; font-weight: 800; letter-spacing: -0.01em; }
+.next-right b { display: block; margin-top: 3px; font-size: 15.5px; font-weight: 600; letter-spacing: -0.01em; }
 
 .synopsis {
   position: relative;
@@ -766,7 +786,7 @@ img { display: block; }
   font-size: 12px;
   font-weight: 600;
 }
-.origin-badge .ico { width: 15px; height: 15px; stroke-width: 1.6; }
+.origin-badge .ico { width: 15px; height: 15px; }
 .origin-badge.origin-manga { background: #f2ebff; color: #7b5cc8; }
 .origin-badge.origin-original { background: #ffe9f0; color: #d8608c; }
 .info-table { display: flex; flex-direction: column; gap: 15px; margin: 0; }
