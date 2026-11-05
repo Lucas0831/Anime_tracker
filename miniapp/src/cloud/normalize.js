@@ -42,11 +42,15 @@ export function docToAnime(doc) {
   const nextAt = toDate(doc.next_airing_at);
   const parts = nextAt ? beijingParts(nextAt) : null;
   const nextEp = doc.next_episode || (doc.episodes_aired || 0) + 1;
+  // 云端缺少 airing_day 时，按下一集放送时间的北京星期对齐日期条
+  const day = typeof doc.airing_day === 'number'
+    ? doc.airing_day
+    : (nextAt ? (new Date(nextAt.getTime() + 8 * 3600 * 1000).getUTCDay() + 6) % 7 : null);
 
   return {
     id,
-    day: typeof doc.airing_day === 'number' ? doc.airing_day : null,
-    time: doc.airing_time || '待定',
+    day,
+    time: doc.airing_time || (parts ? parts.time : '待定'),
     ep: doc.episodes_aired || 0,
     totalEps: doc.episodes_total || 0,
     category: doc.category === 'guochuang' ? 'guochuang' : 'anime',

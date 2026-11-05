@@ -1,14 +1,31 @@
-export const WEEK = [
-  { label: '周一', md: '10-26', date: '2026-10-26' },
-  { label: '周二', md: '10-27', date: '2026-10-27' },
-  { label: '周三', md: '10-28', date: '2026-10-28' },
-  { label: '周四', md: '10-29', date: '2026-10-29' },
-  { label: '周五', md: '10-30', date: '2026-10-30' },
-  { label: '周六', md: '10-31', date: '2026-10-31' },
-  { label: '周日', md: '11-01', date: '2026-11-01' }
-];
+const WEEK_LABELS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+const DAY_MS = 86400000;
 
-export const TODAY_INDEX = 0;
+function pad(n) {
+  return String(n).padStart(2, '0');
+}
+
+// 以北京时间（UTC+8）为准，避免设备时区不同导致日期条错位
+export function shanghaiToday() {
+  return new Date(Date.now() + 8 * 3600 * 1000);
+}
+
+// 周一为 0、周日为 6
+export function todayIndex(now) {
+  return (now.getUTCDay() + 6) % 7;
+}
+
+// 生成 now 所在自然周（周一至周日）的 7 个真实日期
+export function buildWeek(now) {
+  const index = todayIndex(now);
+  const monday = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - index);
+  return WEEK_LABELS.map((label, i) => {
+    const d = new Date(monday + i * DAY_MS);
+    const month = pad(d.getUTCMonth() + 1);
+    const day = pad(d.getUTCDate());
+    return { label, md: month + '-' + day, date: d.getUTCFullYear() + '-' + month + '-' + day };
+  });
+}
 
 export const ANIME = [
   {

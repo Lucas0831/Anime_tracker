@@ -1,15 +1,24 @@
 /* 追番助手 · 纯前端静态原型 — 本地假数据（无任何真实接口） */
-window.WEEK = [
-  { label: '周一', md: '10-26', date: '2026-10-26' },
-  { label: '周二', md: '10-27', date: '2026-10-27' },
-  { label: '周三', md: '10-28', date: '2026-10-28' },
-  { label: '周四', md: '10-29', date: '2026-10-29' },
-  { label: '周五', md: '10-30', date: '2026-10-30' },
-  { label: '周六', md: '10-31', date: '2026-10-31' },
-  { label: '周日', md: '11-01', date: '2026-11-01' }
-];
+// 以北京时间（UTC+8）为准生成当前自然周的 7 个真实日期
+window.WEEK = (function () {
+  var labels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+  var now = new Date(Date.now() + 8 * 3600 * 1000);
+  var index = (now.getUTCDay() + 6) % 7;
+  var monday = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - index);
 
-window.TODAY_INDEX = 0;
+  function pad(n) {
+    return n < 10 ? '0' + n : String(n);
+  }
+
+  return labels.map(function (label, i) {
+    var d = new Date(monday + i * 86400000);
+    var month = pad(d.getUTCMonth() + 1);
+    var day = pad(d.getUTCDate());
+    return { label: label, md: month + '-' + day, date: d.getUTCFullYear() + '-' + month + '-' + day };
+  });
+})();
+
+window.TODAY_INDEX = (new Date(Date.now() + 8 * 3600 * 1000).getUTCDay() + 6) % 7;
 
 window.ANIME = [
   {

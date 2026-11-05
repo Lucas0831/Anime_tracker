@@ -57,7 +57,7 @@
                 <text class="search-row-title">{{ a.title }}</text>
                 <text v-if="a.jp" class="search-row-jp">{{ a.jp }}</text>
                 <view class="search-row-meta">
-                  <text>{{ WEEK[a.day].label }} {{ a.time }}</text>
+                  <text>{{ WEEK[a.day] ? WEEK[a.day].label : '待定' }} {{ a.time }}</text>
                   <view class="dot-sep"></view>
                   <text>{{ a.category === 'guochuang' ? '国漫' : '番剧' }}</text>
                   <view class="dot-sep"></view>

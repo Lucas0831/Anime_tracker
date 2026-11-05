@@ -1,13 +1,16 @@
 <script>
   import { initCloud } from './cloud';
-  import { loadAnime } from './store';
+  import { loadAnime, syncWeek } from './store';
 
   export default {
     onLaunch() {
       initCloud();
       loadAnime();
     },
-    onShow() {},
+    onShow() {
+      // 小程序常驻后台跨天后，重建顶部日期条
+      syncWeek();
+    },
     onHide() {}
   };
 </script>

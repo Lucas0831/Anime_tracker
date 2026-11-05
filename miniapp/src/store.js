@@ -1,5 +1,11 @@
 import { reactive } from 'vue';
-import { WEEK, TODAY_INDEX, ANIME as SEED_ANIME, SEARCH_HISTORY } from './data/anime';
+import {
+  ANIME as SEED_ANIME,
+  SEARCH_HISTORY,
+  buildWeek,
+  shanghaiToday,
+  todayIndex
+} from './data/anime';
 import { fetchAnimeList } from './cloud';
 
 export const FILTERS = [
@@ -14,9 +20,13 @@ export const MODES = {
   grid: { icon: 'calendar7', label: '切换到时间线视图', title: '番剧网格' }
 };
 
+// 当前自然周的 7 个真实日期，跨天后由 syncWeek() 刷新
+export const WEEK = reactive([]);
+let weekKey = '';
+
 export const state = reactive({
   view: 'timeline',
-  day: TODAY_INDEX,
+  day: 0,
   filter: 'all',
   q: '',
   tagsOpen: false,
@@ -27,6 +37,20 @@ export const state = reactive({
   loading: false,
   error: ''
 });
+
+// 按北京时间重建日期条；跨天时把选中日重置为今天，同一天内保留用户选择
+export function syncWeek() {
+  const now = shanghaiToday();
+  const list = buildWeek(now);
+  WEEK.splice(0, WEEK.length, ...list);
+  const index = todayIndex(now);
+  const key = list[index].date;
+  if (weekKey !== key) {
+    weekKey = key;
+    state.day = index;
+  }
+}
+syncWeek();
 
 // 拉取云数据库番剧列表，失败则保留本地数据
 export async function loadAnime(force) {
@@ -68,7 +92,8 @@ export function showsForDay(day, filter) {
 }
 
 export function dayStatus(a) {
-  return a.day <= TODAY_INDEX ? '已播' : '待播';
+  if (typeof a.day !== 'number') return '待定';
+  return a.day <= todayIndex(shanghaiToday()) ? '已播' : '待播';
 }
 
 export function originInfo(a) {
@@ -98,5 +123,3 @@ export function searchAnime(q) {
     return pool.indexOf(keyword) > -1;
   });
 }
-
-export { WEEK, TODAY_INDEX };
