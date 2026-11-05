@@ -45,8 +45,8 @@ export function docToAnime(doc) {
 
   return {
     id,
-    day: typeof doc.airing_day === 'number' ? doc.airing_day : 0,
-    time: doc.airing_time || '00:00',
+    day: typeof doc.airing_day === 'number' ? doc.airing_day : null,
+    time: doc.airing_time || '待定',
     ep: doc.episodes_aired || 0,
     totalEps: doc.episodes_total || 0,
     category: doc.category === 'guochuang' ? 'guochuang' : 'anime',

@@ -10,6 +10,8 @@
 - 新增 `miniapp/`：uni-app + Vue 3 + Vite 小程序前端，可构建 `mp-weixin`，H5 用于本地预览
 - 小程序接入微信云开发：`App.vue` 启动时初始化 `wx.cloud`，`src/cloud/` 负责云查询与字段映射，云端不可用时回退本地假数据
 - 新增云函数 `animeApi`（`list` / `detail` / `week`），构建时自动同步到小程序产物 `cloudfunctions/`
+- 新增云函数 `animeSync`：`season` / `schedules` 接入 AniList，`bangumi` 匹配中文名与评分，`animeschedule` 同步周表；同步结果写入 `anime`、`airing_schedule`、`sync_state`、`match_review`
+- 详情页放送时段兼容云端缺少星期信息的情况，显示「待定」
 - 3 个页面路由承载 5 个界面：`pages/index/index`（时间线 / 列表 / 网格）、`pages/search/search`、`pages/detail/detail`
 - 本地假数据以 ES Module 复用，海报复制到 `src/static/`；图标改为 SVG data URI 线性图标
 - 时间线 / 列表 / 网格页支持横向滑动切换日期：左滑到下一天、右滑到上一天，首尾日期不循环（原型与小程序一致）
@@ -34,6 +36,9 @@
 - 底部筛选 Tab 切换改为液态胶囊动效：选中背景的前沿先到、后沿稍慢并轻微回弹，中途拉伸且高度略压扁，约 420ms 停稳；新选中图标先缩小再弹回，文字颜色渐变到强调色，页面内容沿点击方向轻推淡入；最终选中态不变，并适配「减少动态效果」（原型与小程序一致）
 
 ### 修复
+
+- 修复小程序云环境 ID 配置错误导致始终读取本地种子数据的问题；云函数同步后首页已显示真实番剧
+- 新增构建脚本 `scripts/postbuild-mp.js`：构建 `mp-weixin` 后自动同步云函数，并从 `.env.local` 注入 AppID 与 `cloudfunctionRoot`，避免重新构建后配置被重置
 
 - 修复微信小程序 WXSS 编译错误：移除不支持的 `:root` 与 `*` 选择器，变量与基础盒模型改挂到 `page` / 组件标签上
 - 修复详情页标签展开在微信小程序端报 `unref` 错误：模板不再直接读写全局状态，改用本地计算属性与切换方法

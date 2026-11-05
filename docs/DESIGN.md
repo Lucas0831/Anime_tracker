@@ -207,7 +207,9 @@ window.SEARCH_HISTORY: string[]                 // 搜索历史初始数据
 - 图标由内联 SVG 路径生成 `data:image/svg+xml`，作为 `.app-ico` 背景图渲染，统一 1.5 线宽。
 - 状态存放在 `src/store.js` 的 `reactive` 单例中，仅内存保存；搜索历史、当前视图与日期在页面间共享。
 - 云开发：`App.vue` 启动时 `initCloud()` 初始化 `wx.cloud`，`loadAnime()` 拉取 `anime` 集合；`src/cloud/index.js` 优先调用云函数 `animeApi`（`list` / `detail` / `week`），失败后直查数据库，仍失败则保留本地假数据。
-- 云函数源码位于 `miniapp/cloudfunctions/animeApi/`，构建时同步到小程序产物 `cloudfunctions/`，由微信开发者工具上传部署。
+- 云函数源码位于 `miniapp/cloudfunctions/`，构建时同步到小程序产物 `cloudfunctions/`，由微信开发者工具上传部署：
+  - `animeApi`：小程序端读查询（`list` / `detail` / `week`）；
+  - `animeSync`：服务端同步 AniList / Bangumi / AnimeSchedule 数据到云数据库。
 - 云环境 ID 通过 `.env.local` 的 `VITE_CLOUD_ENV` 注入，不写入仓库；未配置时使用默认云环境。
 - 数字字体 NeutraText-DemiAlt 以 base64 `@font-face` 内嵌在 `src/styles/app.css`，确保 H5 与小程序端一致；原型使用 `assets/` 下的本地字体文件。
 

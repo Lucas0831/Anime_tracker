@@ -56,3 +56,4 @@ ADR（Architecture Decision Record，架构决策记录）用于记录**会影�
 | [0003](0003-hash-routing-spa.md) | 使用 hash 路由 + 集中渲染函数组织多页面 | 已接受 | 2026-11-05 |
 | [0004](0004-uni-app-vue3-miniapp.md) | 以 uni-app + Vue 3 实现小程序前端 | 已接受 | 2026-11-05 |
 | [0005](0005-cloud-database-integration.md) | 小程序接入微信云开发数据库 | 已接受 | 2026-11-06 |
+| [0006](0006-editorial-api-sync.md) | 接入 AniList / Bangumi / AnimeSchedule 同步 | 已接受 | 2026-11-06 |

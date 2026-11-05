@@ -100,7 +100,7 @@
     ['放送状态', anime.value.status],
     ['制作', anime.value.studio],
     ['类型', anime.value.genres.join(' / ')],
-    ['放送时段', WEEK[anime.value.day].label + ' ' + anime.value.time]
+    ['放送时段', WEEK[anime.value.day] ? WEEK[anime.value.day].label + ' ' + anime.value.time : '待定']
   ]);
 
   onLoad((options) => {

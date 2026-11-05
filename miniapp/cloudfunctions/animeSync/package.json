@@ -1,0 +1,9 @@
+{
+  "name": "anime-sync",
+  "version": "1.0.0",
+  "description": "追番助手云函数：从 AniList / Bangumi / AnimeSchedule 同步数据",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
