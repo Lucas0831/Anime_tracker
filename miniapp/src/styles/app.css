@@ -85,7 +85,6 @@ image { display: block; }
 }
 
 /* 数字统一使用 NeutraText-DemiAlt（缺失时回退到近似几何无衬线） */
-.week-date,
 .day-md,
 .tl-time,
 .tl-ep,
@@ -135,8 +134,7 @@ image { display: block; }
 /* 顶栏内部各行不再各自铺白底与吸顶，整块共用一层玻璃材质 */
 .top-bar .app-header { position: static; }
 .top-bar .app-header,
-.top-bar .week-strip,
-.top-bar .week-chips,
+.top-bar .week-tabs,
 .top-bar .day-bar {
   background: transparent;
   border-bottom: 0;
@@ -159,7 +157,8 @@ image { display: block; }
   box-shadow: var(--sheen);
 }
 .header-row {
-  height: 107.69rpx;
+  /* 与右上角小程序原生胶囊（32px 高、距状态栏约 4px）保持同一垂直中线 */
+  height: 88rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -189,73 +188,34 @@ image { display: block; }
 .icon-btn:active { background: var(--soft); transform: scale(0.94); }
 
 /* ---------- Week ---------- */
-.week-strip {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  padding: 7.69rpx 23.08rpx 11.54rpx;
+/* 星期分段标签：7 等分文字，选中态由滑动下划线表示 */
+.week-tabs {
+  /* 下方留出呼吸感，星期栏不贴着日期栏 */
+  padding: 8rpx 30.77rpx 20rpx;
   background: transparent;
-  border-bottom: 1rpx solid var(--glass-line);
 }
-.week-cell {
+.week-track {
   position: relative;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 13.46rpx;
-  padding: 13.46rpx 0 30.77rpx;
-  border-radius: 19.23rpx;
+  align-items: flex-end;
 }
-.week-date {
-  font-size: 22.12rpx;
-  font-weight: 600;
-  color: var(--muted-2);
-  letter-spacing: 0.01em;
-  transition: color 0.15s;
-}
-.week-day {
-  font-size: 24.04rpx;
-  color: var(--ink-2);
-  transition: color 0.15s;
-}
-.week-cell.active .week-date { color: #111; font-weight: 600; }
-.week-cell.active .week-day { color: #111; font-weight: 700; }
-.today-dot {
-  position: absolute;
-  bottom: 5.77rpx;
-  width: 9.62rpx;
-  height: 9.62rpx;
-  border-radius: 50%;
-  background: #111;
-}
-
-.week-chips {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 11.54rpx;
-  padding: 11.54rpx 30.77rpx 23.08rpx;
-  background: transparent;
-}
-.week-chip {
-  width: 100%;
-  height: 76.92rpx;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 23.08rpx;
-  background: var(--soft);
-  font-size: 24.04rpx;
-  font-weight: 500;
+.week-tab {
+  flex: 1 1 0;
+  padding: 12rpx 0 20rpx;
+  text-align: center;
+  font-size: 26rpx;
+  line-height: 1.2;
   color: var(--muted);
-  transition: all 0.18s;
+  font-weight: 400;
 }
-.week-chip.active {
-  background: linear-gradient(160deg, #2c2c33 0%, #131316 100%);
-  color: #fff;
-  font-weight: 600;
-  box-shadow: 0 10rpx 24rpx rgba(12, 12, 18, 0.22), inset 0 1rpx 0 rgba(255, 255, 255, 0.16);
+.week-underline {
+  position: absolute;
+  bottom: 2rpx;
+  height: 6rpx;
+  border-radius: 999rpx;
+  background: #0462C2;
+  will-change: left, width;
 }
-.week-chip:active { transform: scale(0.96); }
 
 /* ---------- Timeline day bar & filters ---------- */
 .day-bar {
@@ -487,7 +447,6 @@ image { display: block; }
 }
 
 /* ---------- List ---------- */
-.page-list .week-chips { padding-bottom: 7.69rpx; }
 .list-body-wrap {
   display: flex;
   flex-direction: column;

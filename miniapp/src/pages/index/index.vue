@@ -3,12 +3,13 @@
     class="page"
     :class="pageClass"
     @touchstart="onTouchStart"
+    @touchmove="onTouchMove"
     @touchend="onTouchEnd"
     @touchcancel="onTouchCancel"
   >
     <view class="top-bar">
-      <view class="app-header">
-        <view class="header-row">
+      <view class="app-header" :style="headerPad">
+        <view class="header-row" :style="headerRow">
           <view class="icon-btn" :aria-label="mode.label" @tap="switchView">
             <AppIcon :name="mode.icon" :size="42" />
           </view>
@@ -17,28 +18,17 @@
         </view>
       </view>
 
-      <view v-if="state.view === 'timeline'" class="week-strip" aria-label="本周日期">
-        <view
-          v-for="(d, i) in WEEK"
-          :key="d.date"
-          class="week-cell"
-          :class="{ active: i === state.day }"
-          @tap="state.day = i"
-        >
-          <text class="week-date">{{ d.md }}</text>
-          <text class="week-day">{{ d.label.slice(1) }}</text>
-          <view v-if="i === state.day" class="today-dot"></view>
+      <view class="week-tabs" aria-label="本周星期">
+        <view class="week-track">
+          <view class="week-underline" :style="underlineStyle"></view>
+          <view
+            v-for="(d, i) in WEEK"
+            :key="d.date"
+            class="week-tab"
+            :style="tabStyle(i)"
+            @tap="selectDay(i)"
+          >{{ d.label }}</view>
         </view>
-      </view>
-
-      <view v-else class="week-chips" aria-label="本周日期">
-        <view
-          v-for="(d, i) in WEEK"
-          :key="d.date"
-          class="week-chip"
-          :class="{ active: i === state.day }"
-          @tap="state.day = i"
-        >{{ d.label }}</view>
       </view>
 
       <view v-if="state.view === 'timeline'" class="day-bar">
@@ -148,7 +138,7 @@
 </template>
 
 <script setup>
-  import { computed, getCurrentInstance, nextTick, onMounted, reactive, ref } from 'vue';
+  import { computed, getCurrentInstance, nextTick, onMounted, reactive, ref, watch } from 'vue';
   import AppIcon from '../../components/AppIcon.vue';
   import EmptyState from '../../components/EmptyState.vue';
   import {
@@ -338,15 +328,40 @@
     selectFilter('all');
   }
 
+  /* ---------- 顶栏与原生胶囊对齐 ---------- */
+  const headerPad = ref({});
+  const headerRow = ref({});
+
+  // 用状态栏高度 + 胶囊按钮位置反推标题行高度，使标题中线与胶囊中线重合
+  function syncHeaderMetrics() {
+    try {
+      const statusBar = uni.getSystemInfoSync().statusBarHeight || 0;
+      if (statusBar) headerPad.value = { paddingTop: statusBar + 'px' };
+      const rect = typeof wx !== 'undefined' && wx.getMenuButtonBoundingClientRect
+        ? wx.getMenuButtonBoundingClientRect()
+        : null;
+      if (rect && rect.height) {
+        const topGap = Math.max(0, rect.top - statusBar);
+        headerRow.value = { height: topGap * 2 + rect.height + 'px' };
+      }
+    } catch (e) {
+      // 取不到胶囊位置时沿用样式中的默认行高
+    }
+  }
+
   onMounted(() => {
+    syncHeaderMetrics();
     nextTick(measureTabs);
     setTimeout(measureTabs, 120);
+    nextTick(measureSeg);
+    setTimeout(measureSeg, 120);
   });
 
   const NEXT_VIEW = { timeline: 'list', list: 'grid', grid: 'timeline' };
 
   function switchView() {
     state.view = NEXT_VIEW[state.view] || 'timeline';
+    setTimeout(measureSeg, 60);
   }
 
   function openSearch() {
@@ -357,31 +372,250 @@
     uni.navigateTo({ url: '/pages/detail/detail?id=' + id });
   }
 
-  let swipeStart = null;
+  /* ---------- 星期分段标签：跟手下划线 + 毛毛虫伸缩 ---------- */
+  const seg = reactive({ left: 0, width: 0, pos: null, ready: false });
+  const segRects = [];
+  let segPitch = 1;
+  let segBaseW = 28;
+  let segRaf = 0;
+  let segMeasuring = false;
+  let drag = null;
+  let pendingFrom = null;
+  let suppressTapUntil = 0;
 
-  function setDay(day) {
-    state.day = Math.max(0, Math.min(WEEK.length - 1, day));
+  const underlineStyle = computed(() => ({
+    left: seg.left + 'px',
+    width: seg.width + 'px',
+    opacity: seg.ready ? 1 : 0
+  }));
+
+  function clamp(v, min, max) {
+    return v < min ? min : v > max ? max : v;
+  }
+
+  function segCenter(i) {
+    const r = segRects[i];
+    return r ? r.left + r.width / 2 : 0;
+  }
+
+  function segBaseLeft(i) {
+    return segCenter(i) - segBaseW / 2;
+  }
+
+  // 文字颜色与字重按与下划线中心的距离平滑过渡
+  function tabStyle(i) {
+    const p = seg.pos === null ? state.day : seg.pos;
+    const raw = Math.max(0, 1 - Math.abs(i - p));
+    const f = raw * raw * (3 - 2 * raw);
+    const r = Math.round(98 + (17 - 98) * f);
+    const b = Math.round(106 + (17 - 106) * f);
+    return {
+      color: 'rgb(' + r + ',' + r + ',' + b + ')',
+      fontWeight: String(Math.round(400 + 300 * f))
+    };
+  }
+
+  function measureSeg() {
+    if (segMeasuring) return;
+    segMeasuring = true;
+    const query = uni.createSelectorQuery().in(instance.proxy);
+    query.select('.week-track').boundingClientRect();
+    query.selectAll('.week-tab').boundingClientRect();
+    query.exec((res) => {
+      segMeasuring = false;
+      const track = res[0];
+      const tabs = res[1] || [];
+      if (!track || tabs.length !== WEEK.length) return;
+      segRects.length = 0;
+      tabs.forEach((r) => segRects.push({ left: r.left - track.left, width: r.width }));
+      segPitch = tabs.reduce((sum, r) => sum + r.width, 0) / tabs.length;
+      const win = uni.getSystemInfoSync().windowWidth || 375;
+      // 56rpx 的下划线宽度，按屏宽换算成 px，并留出格内边距
+      segBaseW = Math.max(18, Math.min(segPitch - 12, Math.round((56 * win) / 750)));
+      if (seg.pos === null) {
+        seg.left = segBaseLeft(state.day);
+        seg.width = segBaseW;
+      }
+      seg.ready = true;
+    });
+  }
+
+  // 拖动时前缘快、后缘慢：中途被拉长，落点时收回到标签宽度
+  function dragGeometry(p, rightward) {
+    const max = WEEK.length - 1;
+    const x = clamp(p, 0, max);
+    const i0 = Math.min(max, Math.floor(x));
+    const i1 = Math.min(max, i0 + 1);
+    const u = x - i0;
+    let lead;
+    let trail;
+    if (rightward) {
+      const eo = 1 - (1 - u) * (1 - u);
+      const ei = u * u;
+      lead = segBaseLeft(i0) + segBaseW + (segBaseLeft(i1) - segBaseLeft(i0)) * eo;
+      trail = segBaseLeft(i0) + (segBaseLeft(i1) - segBaseLeft(i0)) * ei;
+    } else {
+      const w = 1 - u;
+      const eo = 1 - (1 - w) * (1 - w);
+      const ei = w * w;
+      lead = segBaseLeft(i1) + (segBaseLeft(i0) - segBaseLeft(i1)) * eo;
+      trail = segBaseLeft(i1) + segBaseW + (segBaseLeft(i0) - segBaseLeft(i1)) * ei;
+    }
+    return {
+      left: Math.min(lead, trail),
+      width: Math.max(8, Math.abs(trail - lead))
+    };
+  }
+
+  function animateSeg(target, fromPos) {
+    if (segRaf) caf(segRaf);
+    segRaf = 0;
+    const toLeft = segBaseLeft(target);
+    const startLeft = seg.left;
+    const startWidth = Math.max(8, seg.width);
+    const startAt = nowMs();
+
+    if (prefersReducedMotion() || !segRects.length) {
+      seg.left = toLeft;
+      seg.width = segBaseW;
+      seg.pos = null;
+      return;
+    }
+
+    const rightward = target >= fromPos;
+    const lead = { v: rightward ? startLeft + startWidth : startLeft, vel: 0 };
+    const trail = { v: rightward ? startLeft : startLeft + startWidth, vel: 0 };
+    const leadTo = rightward ? toLeft + segBaseW : toLeft;
+    const trailTo = rightward ? toLeft : toLeft + segBaseW;
+    const center0 = segCenter(0);
+    let last = startAt;
+
+    function frame() {
+      const now = nowMs();
+      const dt = Math.min(34, now - last) / 1000;
+      last = now;
+      springStep(lead, leadTo, 420, 28, dt);
+      springStep(trail, trailTo, 240, 20, dt);
+
+      const settled = Math.abs(lead.v - leadTo) < 0.35 && Math.abs(lead.vel) < 0.4 &&
+        Math.abs(trail.v - trailTo) < 0.35 && Math.abs(trail.vel) < 0.4;
+      if (settled || now - startAt > 620) {
+        seg.left = toLeft;
+        seg.width = segBaseW;
+        seg.pos = null;
+        segRaf = 0;
+        return;
+      }
+
+      const left = Math.min(lead.v, trail.v);
+      const width = Math.max(8, Math.abs(trail.v - lead.v));
+      seg.left = left;
+      seg.width = width;
+      // 文字明暗由下划线中心反推，保证与下划线同步收尾
+      seg.pos = clamp((left + width / 2 - center0) / segPitch, 0, WEEK.length - 1);
+      segRaf = raf(frame);
+    }
+
+    segRaf = raf(frame);
+  }
+
+  watch(
+    () => state.day,
+    (to, from) => {
+      if (!seg.ready) return;
+      const fromPos = pendingFrom === null ? from : pendingFrom;
+      pendingFrom = null;
+      pushContent(to > fromPos ? 1 : -1);
+      animateSeg(to, fromPos);
+    }
+  );
+
+  function selectDay(i) {
+    if (nowMs() < suppressTapUntil || i === state.day) return;
+    state.day = i;
   }
 
   function onTouchStart(e) {
     const t = e.touches && e.touches[0];
-    swipeStart = t ? { x: t.clientX, y: t.clientY } : null;
+    drag = t
+      ? { x: t.clientX, y: t.clientY, active: false, anchor: state.day, lastX: t.clientX, lastT: nowMs(), vx: 0 }
+      : null;
+  }
+
+  function onTouchMove(e) {
+    if (!drag) return;
+    const t = e.touches && e.touches[0];
+    if (!t) return;
+    const dx = t.clientX - drag.x;
+    const dy = t.clientY - drag.y;
+
+    if (!drag.active) {
+      // 横向位移明显大于纵向才接管，避免抢走纵向滚动
+      if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy) * 1.15) {
+        if (Math.abs(dy) > 8) drag = null;
+        return;
+      }
+      if (!seg.ready) measureSeg();
+      if (segRaf) {
+        caf(segRaf);
+        segRaf = 0;
+        seg.pos = null;
+        seg.left = segBaseLeft(state.day);
+        seg.width = segBaseW;
+      }
+      drag.active = true;
+      seg.pos = drag.anchor;
+    }
+
+    const now = nowMs();
+    const dt = now - drag.lastT;
+    if (dt > 0) {
+      drag.vx = drag.vx * 0.6 + ((t.clientX - drag.lastX) / dt) * 0.4;
+      drag.lastX = t.clientX;
+      drag.lastT = now;
+    }
+
+    // 单次滑动最多只跨到相邻一天：下划线跟手时限制在 anchor ± 1 格内
+    const lo = Math.max(0, drag.anchor - 1);
+    const hi = Math.min(WEEK.length - 1, drag.anchor + 1);
+    const p = clamp(drag.anchor - dx / segPitch, lo, hi);
+    const rightward = p >= (seg.pos === null ? drag.anchor : seg.pos);
+    seg.pos = p;
+    const geo = dragGeometry(p, rightward);
+    seg.left = geo.left;
+    seg.width = geo.width;
   }
 
   function onTouchEnd(e) {
-    const start = swipeStart;
-    swipeStart = null;
-    if (!start) return;
+    const d = drag;
+    drag = null;
+    if (!d || !d.active) return;
     const t = e.changedTouches && e.changedTouches[0];
     if (!t) return;
-    const dx = t.clientX - start.x;
-    const dy = t.clientY - start.y;
-    // 横向位移超过 56px 且明显大于纵向位移才切换日期，避免干扰纵向滚动与点击
-    if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
-    setDay(state.day + (dx < 0 ? 1 : -1));
+
+    const dx = t.clientX - d.x;
+    // 单次手势最多切到相邻一天，速度再快也不跨格
+    const lo = Math.max(0, d.anchor - 1);
+    const hi = Math.min(WEEK.length - 1, d.anchor + 1);
+    const p = clamp(d.anchor - dx / segPitch, lo, hi);
+    // 距离 + 速度投影（最多再滑 1 格），松手吸附到最近的一格
+    const kick = clamp((d.vx * 0.06) / segPitch, -1, 1);
+    const target = clamp(Math.round(p + kick), lo, hi);
+
+    suppressTapUntil = nowMs() + 260;
+    if (target === state.day) {
+      animateSeg(state.day, p);
+      return;
+    }
+    pendingFrom = p;
+    state.day = target;
   }
 
   function onTouchCancel() {
-    swipeStart = null;
+    const d = drag;
+    drag = null;
+    if (!d || !d.active) return;
+    animateSeg(state.day, seg.pos === null ? d.anchor : seg.pos);
   }
 </script>
+
