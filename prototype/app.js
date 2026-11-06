@@ -38,12 +38,13 @@
     layers: '<path d="M12 3.5l8.4 4.6-8.4 4.6-8.4-4.6z"/><path d="M3.6 12.6l8.4 4.6 8.4-4.6"/><path d="M3.6 17l8.4 4.6 8.4-4.6"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
     arrowUp: '<path d="M12 19V5M6.5 10.5L12 5l5.5 5.5"/>',
+    arrowUpRight: '<path d="M7 17L17 7M9.5 7H17v7.5"/>',
     book: '<path d="M4.5 5.5c2.4-.8 4.6-.3 7.5 1.2v12c-2.9-1.5-5.1-2-7.5-1.2zM19.5 5.5c-2.4-.8-4.6-.3-7.5 1.2v12c2.9-1.5 5.1-2 7.5-1.2z"/>',
     calendarX: '<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 9.5h17M9.5 13.5l5 4M14.5 13.5l-5 4"/>',
     x: '<path d="M5.5 5.5l13 13M18.5 5.5l-13 13"/>'
   };
 
-  var ICON_ALIASES = { 'calendar-x': 'calendarX', 'arrow-up': 'arrowUp' };
+  var ICON_ALIASES = { 'calendar-x': 'calendarX', 'arrow-up': 'arrowUp', 'arrow-up-right': 'arrowUpRight' };
 
   function icon(name, cls) {
     var key = String(name || '').replace(/^i-/, '');
@@ -219,42 +220,96 @@
   }
 
   function searchRow(a) {
-    return '<article class="search-row" data-action="open" data-id="' + a.id + '" role="button" tabindex="0" aria-label="查看 ' + esc(a.title) + ' 详情">' +
-      '<img src="' + esc(a.poster) + '" alt="' + esc(a.title) + '" loading="lazy">' +
-      '<div class="search-row-body">' +
-        '<h3>' + esc(a.title) + '</h3>' +
-        (a.jp ? '<p>' + esc(a.jp) + '</p>' : '') +
-        '<div class="search-row-meta">' +
+    return '<article class="result-row" data-action="open" data-id="' + a.id + '" role="button" tabindex="0" aria-label="查看 ' + esc(a.title) + ' 详情">' +
+      '<img class="result-poster" src="' + esc(a.poster) + '" alt="' + esc(a.title) + '" loading="lazy">' +
+      '<div class="result-body">' +
+        '<h3 class="result-title">' + esc(a.title) + '</h3>' +
+        (a.jp ? '<p class="result-jp">' + esc(a.jp) + '</p>' : '') +
+        '<div class="result-meta">' +
           '<span>' + window.WEEK[a.day].label + ' ' + a.time + '</span>' +
           '<span class="dot-sep"></span>' +
           '<span>' + (a.category === 'guochuang' ? '国漫' : '番剧') + '</span>' +
           '<span class="dot-sep"></span>' +
-          '<span>第' + a.ep + '话</span>' +
+          '<span>第 ' + a.ep + ' 话</span>' +
         '</div>' +
       '</div>' +
-      '<span class="row-chev">›</span>' +
+      icon('i-arrow-up-right', 'result-go') +
     '</article>';
+  }
+
+  function historyRow(k) {
+    return '<button class="history-row" data-action="keyword" data-q="' + esc(k) + '" aria-label="搜索 ' + esc(k) + '">' +
+      '<span class="history-ico">' + icon('i-clock') + '</span>' +
+      '<span class="history-text">' + esc(k) + '</span>' +
+      icon('i-arrow-up-right', 'history-go') +
+    '</button>';
+  }
+
+  // 「按标签探索」入口：从数据里统计出现最多的标签，跳过来源与分类标签
+  var SKIP_TAGS = ['漫画改', '漫改', '国创', '国漫'];
+
+  function suggestTags() {
+    var counts = {};
+    window.ANIME.forEach(function (a) {
+      (a.tags || []).forEach(function (t) {
+        if (SKIP_TAGS.indexOf(t) > -1) return;
+        counts[t] = (counts[t] || 0) + 1;
+      });
+    });
+    return Object.keys(counts).map(function (name) {
+      return { name: name, count: counts[name] };
+    }).sort(function (a, b) { return b.count - a.count; }).slice(0, 8);
+  }
+
+  function tagsHTML() {
+    var tags = suggestTags();
+    return '<section class="search-section">' +
+        '<div class="section-head">' +
+          '<h2 class="section-title">按标签探索</h2>' +
+          '<span class="section-rule"></span>' +
+          '<span class="section-note">' + tags.length + ' 个标签</span>' +
+        '</div>' +
+        '<div class="suggest-cloud">' + tags.map(function (t) {
+          return '<button class="tag-chip" data-action="keyword" data-q="' + esc(t.name) + '">' +
+            '<span class="tag-chip-name">' + esc(t.name) + '</span>' +
+            '<span class="tag-chip-count">' + t.count + '</span>' +
+          '</button>';
+        }).join('') + '</div>' +
+      '</section>';
   }
 
   function historyHTML() {
     var items = state.history;
     return '<section class="search-section">' +
         '<div class="section-head">' +
-          '<h2 class="section-title">搜索历史</h2>' +
+          '<h2 class="section-title">最近搜索</h2>' +
+          '<span class="section-rule"></span>' +
           (items.length ? '<button class="section-action" data-action="clear-history">清空</button>' : '') +
         '</div>' +
         (items.length
-          ? '<div class="history-tags">' + items.map(function (k) {
-              return '<button class="history-tag" data-action="keyword" data-q="' + esc(k) + '">' + esc(k) + '</button>';
-            }).join('') + '</div>'
-          : '<p class="history-empty">暂无搜索记录</p>') +
-      '</section>';
+          ? '<div class="search-panel">' + items.map(historyRow).join('') + '</div>'
+          : '<div class="history-blank">' + icon('i-clock') +
+              '<span class="history-blank-text">还没有搜索记录，试试下面的标签</span></div>') +
+      '</section>' +
+      tagsHTML();
   }
 
   function rememberQuery(q) {
     q = String(q || '').trim();
     if (!q) return;
     state.history = [q].concat(state.history.filter(function (h) { return h !== q; })).slice(0, 8);
+  }
+
+  function pad2(n) {
+    return (n < 10 ? '0' : '') + n;
+  }
+
+  function noResultsHTML() {
+    return '<div class="result-blank">' +
+      '<div class="result-orb">' + icon('i-search') + '</div>' +
+      '<h3 class="result-blank-title">没有找到「' + esc(state.q.trim()) + '」</h3>' +
+      '<p class="result-blank-desc">换个关键词，或从标签里挑一个</p>' +
+    '</div>';
   }
 
   function searchResultsHTML() {
@@ -264,21 +319,30 @@
       var pool = [a.title, a.jp, a.studio, a.season, a.category === 'guochuang' ? '国创 国漫' : '番剧'].concat(a.tags, a.extraTags || [], a.genres).join(' ').toLowerCase();
       return pool.indexOf(q) > -1;
     });
-    if (!results.length) return emptyState('search');
-    return '<div class="search-count">找到 <b>' + results.length + '</b> 部番剧</div>' +
-      '<div class="search-list">' + results.map(searchRow).join('') + '</div>';
+    if (!results.length) return noResultsHTML();
+    return '<div class="result-head">' +
+        '<div class="result-head-left">' +
+          '<span class="result-label">搜索结果</span>' +
+          '<span class="result-query">「' + esc(state.q.trim()) + '」</span>' +
+        '</div>' +
+        '<div class="result-count"><span class="result-num">' + pad2(results.length) + '</span><span class="result-unit">部</span></div>' +
+      '</div>' +
+      '<div class="search-panel result-panel">' + results.map(searchRow).join('') + '</div>';
   }
 
   function renderSearch() {
     return '<div class="page page-search">' +
-      '<header class="app-header search-header">' +
-        '<button class="icon-btn" data-action="back" aria-label="返回">' + icon('i-back') + '</button>' +
-        '<div class="search-box">' + icon('i-search', 'search-box-ico') +
-          '<input id="search-input" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="搜索番剧、制作、标签" value="' + esc(state.q) + '" aria-label="搜索番剧">' +
+      '<header class="search-top">' +
+        '<div class="search-nav">' +
+          '<button class="icon-btn" data-action="back" aria-label="返回">' + icon('i-back') + '</button>' +
+        '</div>' +
+        '<div class="search-field" id="search-field">' +
+          '<span class="search-field-icon">' + icon('i-search') + '</span>' +
+          '<input class="search-input" id="search-input" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="搜索番剧、制作、标签" value="' + esc(state.q) + '" aria-label="搜索番剧">' +
           '<button class="search-clear" id="search-clear" data-action="clear-search" aria-label="清空搜索"' + (state.q ? '' : ' hidden') + '>' + icon('i-x') + '</button>' +
         '</div>' +
       '</header>' +
-      '<div class="search-body" id="search-results">' + searchResultsHTML() + '</div>' +
+      '<main class="search-body" id="search-results">' + searchResultsHTML() + '</main>' +
       '<div class="page-pad"></div>' +
     '</div>';
   }
@@ -634,7 +698,9 @@
       state.filter = 'all';
       renderKeepScroll();
     } else if (action === 'keyword') {
-      applyKeyword(target.getAttribute('data-q') || '');
+      var keyword = target.getAttribute('data-q') || '';
+      applyKeyword(keyword);
+      rememberQuery(keyword);
     } else if (action === 'clear-search') {
       applyKeyword('');
       var input = document.getElementById('search-input');
@@ -672,6 +738,20 @@
   viewport.addEventListener('touchcancel', function () {
     swipeStart = null;
   }, { passive: true });
+
+  viewport.addEventListener('focusin', function (e) {
+    if (e.target && e.target.id === 'search-input') {
+      var field = document.getElementById('search-field');
+      if (field) field.classList.add('is-focus');
+    }
+  });
+
+  viewport.addEventListener('focusout', function (e) {
+    if (e.target && e.target.id === 'search-input') {
+      var field = document.getElementById('search-field');
+      if (field) field.classList.remove('is-focus');
+    }
+  });
 
   viewport.addEventListener('input', function (e) {
     if (e.target && e.target.id === 'search-input') {

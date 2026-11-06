@@ -10,6 +10,7 @@ export const ICON_PATHS = {
   layers: '<path d="M12 3.5l8.4 4.6-8.4 4.6-8.4-4.6z"/><path d="M3.6 12.6l8.4 4.6 8.4-4.6"/><path d="M3.6 17l8.4 4.6 8.4-4.6"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   arrowUp: '<path d="M12 19V5M6.5 10.5L12 5l5.5 5.5"/>',
+  arrowUpRight: '<path d="M7 17L17 7M9.5 7H17v7.5"/>',
   book: '<path d="M4.5 5.5c2.4-.8 4.6-.3 7.5 1.2v12c-2.9-1.5-5.1-2-7.5-1.2zM19.5 5.5c-2.4-.8-4.6-.3-7.5 1.2v12c2.9-1.5 5.1-2 7.5-1.2z"/>',
   calendarX: '<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 9.5h17M9.5 13.5l5 4M14.5 13.5l-5 4"/>',
   x: '<path d="M5.5 5.5l13 13M18.5 5.5l-13 13"/>'
