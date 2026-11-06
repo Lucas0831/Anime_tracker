@@ -40,14 +40,14 @@ button { cursor: pointer; border: 0; background: none; padding: 0; }
 button:focus-visible, input:focus-visible, [role="button"]:focus-visible { outline: 2px solid #111; outline-offset: 2px; }
 img { display: block; }
 
-.svg-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
-
+/* 自定义线性图标基线：仅描边、等宽 1.5、圆角端点，颜色随 color 继承 */
 .ico {
   width: 22px;
   height: 22px;
   display: block;
   fill: none;
-  stroke: #8e8e94;
+  color: #8e8e94;
+  stroke: currentColor;
   stroke-width: 1.5;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -314,8 +314,7 @@ img { display: block; }
 .dock-tab .ico {
   width: 20px;
   height: 20px;
-  stroke: #1d1d20;
-  transition: stroke 0.18s;
+  transition: color 0.18s;
 }
 .dock-label {
   font-size: 11.5px;
@@ -324,7 +323,6 @@ img { display: block; }
   transition: color 0.28s ease;
 }
 .dock-tab.active { color: var(--accent); }
-.dock-tab.active .ico { stroke: var(--accent); }
 .dock-tab.active .dock-label { color: var(--accent); font-weight: 600; }
 .dock-tab:active { transform: scale(0.96); }
 /* 选中项颜色渐变：整页重绘后由动画从旧色过渡到新色 */
@@ -364,7 +362,7 @@ img { display: block; }
   pointer-events: auto;
   transition: transform 0.15s, background 0.15s;
 }
-.dock-search .ico { width: 22px; height: 22px; stroke: #1d1d20; }
+.dock-search .ico { width: 22px; height: 22px; color: #1d1d20; }
 .dock-search:active { transform: scale(0.94); background: rgba(255, 255, 255, 0.86); }
 
 /* ---------- Timeline ---------- */
@@ -715,6 +713,7 @@ img { display: block; }
 .section-head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   margin-bottom: 10px;
 }
@@ -725,15 +724,19 @@ img { display: block; }
   letter-spacing: 0.01em;
   color: var(--ink);
 }
-/* 标题与操作之间的细线，把两段信息隔开又不加一个卡片 */
-.section-rule { flex: 1; height: 1px; background: rgba(18, 18, 28, 0.07); }
+/* 次级操作按钮：胶囊凹槽底，按压轻微缩小并加深 */
 .section-action {
-  padding: 5px 0 5px 4px;
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--soft);
   font-size: 11px;
-  color: #6f6f77;
+  color: #56565c;
+  transition: transform 0.15s, background 0.15s;
 }
-.section-action:active { color: var(--ink); }
-.section-note { font-size: 10px; letter-spacing: 0.02em; color: #a0a0a8; }
+.section-action:active { transform: scale(0.96); background: rgba(20, 20, 30, 0.1); }
 
 /* 索引式面板：整块玻璃承载多行，用发丝线分隔，避免一堆浮起的独立卡片 */
 .search-panel {
@@ -783,7 +786,7 @@ img { display: block; }
   border: 1px dashed rgba(20, 20, 30, 0.1);
   background: rgba(255, 255, 255, 0.5);
 }
-.history-blank .ico { width: 17px; height: 17px; stroke: #adadb5; }
+.history-blank .ico { width: 17px; height: 17px; color: #adadb5; }
 .history-blank-text { font-size: 11.5px; color: #6f6f77; }
 
 .suggest-cloud { display: flex; flex-wrap: wrap; gap: 7px; }

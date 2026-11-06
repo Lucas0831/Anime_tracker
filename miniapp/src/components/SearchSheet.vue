@@ -54,7 +54,6 @@
           <view class="search-section">
             <view class="section-head">
               <text class="section-title">最近搜索</text>
-              <view class="section-rule"></view>
               <view v-if="state.history.length" class="section-action" @tap="clearHistory">清空</view>
             </view>
 
@@ -81,8 +80,6 @@
           <view class="search-section">
             <view class="section-head">
               <text class="section-title">按标签探索</text>
-              <view class="section-rule"></view>
-              <text class="section-note">{{ suggestTags.length }} 个标签</text>
             </view>
 
             <view class="suggest-cloud">

@@ -722,6 +722,7 @@ image { display: block; }
 .section-head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16rpx;
   margin-bottom: 20rpx;
 }
@@ -731,15 +732,19 @@ image { display: block; }
   letter-spacing: 0.01em;
   color: var(--ink);
 }
-/* 标题与操作之间的细线，把两段信息隔开又不加一个卡片 */
-.section-rule { flex: 1; height: 1rpx; background: rgba(18, 18, 28, 0.07); }
+/* 次级操作按钮：胶囊凹槽底，按压轻微缩小并加深 */
 .section-action {
-  padding: 10rpx 0 10rpx 8rpx;
-  font-size: 22rpx;
+  display: flex;
+  align-items: center;
+  height: 54rpx;
+  padding: 0 23rpx;
+  border-radius: 999rpx;
+  background: var(--soft);
+  font-size: 21rpx;
   color: var(--muted-2);
+  transition: transform 0.15s, background 0.15s;
 }
-.section-action:active { color: var(--ink); }
-.section-note { font-size: 20rpx; letter-spacing: 0.02em; color: #a0a0a8; }
+.section-action:active { transform: scale(0.96); background: rgba(20, 20, 30, 0.1); }
 
 /* 索引式面板：整块玻璃承载多行，用发丝线分隔，避免一堆浮起的独立卡片 */
 .search-panel {
