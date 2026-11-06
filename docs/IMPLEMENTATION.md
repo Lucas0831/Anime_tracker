@@ -54,9 +54,11 @@ window.SEARCH_HISTORY: string[]                 // 搜索历史初始数据
 
 | 原型页面 | 小程序路由 | 说明 |
 | --- | --- | --- |
-| 时间线 / 列表 / 网格 | `pages/index/index` | 单页内通过 `view` 状态切换三种浏览方式，共享日期与筛选 |
-| 搜索 | `pages/search/search` | 独立页面，返回时保留关键词 |
+| 时间线 / 列表 / 网格 | `pages/index/index` | 单页内通过 `view` 状态切换三种浏览方式，共享日期与筛选；搜索浮层由 `src/components/SearchSheet.vue` 内嵌在同一页 |
+| 搜索浮层 | 无独立路由（`pages/index/index` 内） | 底部弹层覆盖在当前浏览页上，背景页保持原尺寸并压暗；关闭后回到来源浏览页 |
 | 详情 | `pages/detail/detail?id=<id>` | 独立页面，返回来源页 |
+
+- 小程序共 2 个页面路由（`pages/index/index`、`pages/detail/detail`）；原 `pages/search/search` 已移除，搜索改由首页内浮层承载。
 
 - 样式按 390 设计宽等比换算为 `rpx`（750 设计宽），移动端比例与原型一致。
 - 图标由内联 SVG 路径生成 `data:image/svg+xml`，作为 `.app-ico` 背景图渲染，统一 1.5 线宽。

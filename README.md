@@ -50,7 +50,7 @@ VITE_WECHAT_APPID=你的小程序 AppID
 
 ## 页面与路由
 
-原型共 5 个页面，通过 hash 路由串联；小程序用 3 个页面路由承载同样的 5 个界面。
+原型共 4 个页面 + 1 个搜索浮层，通过 hash 路由串联；小程序用 2 个页面路由承载同样的界面，搜索为首页内浮层。
 
 | 页面 | 路由 | 说明 |
 | --- | --- | --- |
@@ -58,11 +58,11 @@ VITE_WECHAT_APPID=你的小程序 AppID
 | 列表页 | `#/list` | 同一天的列表浏览方式 |
 | 网格页 | `#/grid` | 同一天的网格浏览方式，海报封面优先 |
 | 详情页 | `#/detail/<id>` | 番剧详情、下一集与标签 |
-| 搜索页 | `#/search` | 按标题 / 日文名 / 标签搜索，空态展示搜索历史 |
+| 搜索浮层 | `#/search` | 底部弹层，按标题 / 日文名 / 标签搜索；背景页保持原尺寸并压暗 |
 
-左上角视图按钮在时间线 → 列表 → 网格之间循环切换；搜索入口在底部胶囊 Tab Bar；任意卡片进入详情，详情返回时回到来源页。顶部为「周一…周日」星期分段标签，按北京时间动态生成当前自然周并默认选中今天，点击标签或在页面上左右滑动都可切换日期。
+左上角视图按钮在时间线 → 列表 → 网格之间循环切换；搜索入口在底部胶囊 Tab Bar，点击后搜索浮层从底部弹起，可上下拖拽关闭；任意卡片进入详情，详情返回时回到来源页。顶部为「周一…周日」星期分段标签，按北京时间动态生成当前自然周并默认选中今天，点击标签或在页面上左右滑动都可切换日期。
 
-小程序路由：`pages/index/index`（时间线 / 列表 / 网格，页内切换）、`pages/search/search`、`pages/detail/detail?id=<id>`。
+小程序路由：`pages/index/index`（时间线 / 列表 / 网格 / 搜索浮层，页内切换）、`pages/detail/detail?id=<id>`。
 
 ## 目录结构
 
@@ -85,7 +85,8 @@ Anime_tracker_assistant/
 │       ├── 0004-uni-app-vue3-miniapp.md
 │       ├── 0005-cloud-database-integration.md
 │       ├── 0006-editorial-api-sync.md
-│       └── 0007-bangumi-mirror.md
+│       ├── 0007-bangumi-mirror.md
+│       └── 0008-search-bottom-sheet.md
 ├── .trae/
 │   └── rules/
 │       └── project_rules.md        # 工作区规则（目录、文档、代码、提交规范）
@@ -110,19 +111,19 @@ Anime_tracker_assistant/
         ├── data/anime.js           # ES Module 假数据（云端不可用时回退）
         ├── store.js                # reactive 单例状态与筛选/搜索逻辑
         ├── icons.js                # SVG 图标路径 → data URI
-        ├── components/             # AppIcon、EmptyState
+        ├── components/             # AppIcon、EmptyState、SearchSheet
         ├── styles/app.css          # rpx 样式（由原型换算）
         ├── static/                 # 21 张海报
-        └── pages/                  # index / search / detail
+        └── pages/                  # index / detail（搜索为首页内浮层）
 ```
 
 ## 文档索引
 
 - [全局 UI 设计规范](docs/DESIGN.md)：设计原则、视觉语言、色彩与材质、字体图标、尺寸动效、响应式与可访问性。
-- [页面与交互规格](docs/PAGE_SPEC.md)：信息架构、路由表、5 个页面的模块与交互状态、底部 Tab Bar。
+- [页面与交互规格](docs/PAGE_SPEC.md)：信息架构、路由表、4 个页面与搜索浮层的模块与交互状态、底部 Tab Bar。
 - [实现说明](docs/IMPLEMENTATION.md)：数据模型、原型与小程序实现、已知限制。
 - [字段接口来源文档](docs/字段接口来源文档.md)：云数据库集合字段、索引、权限与三路接口的字段映射。
-- [ADR 索引](docs/adr/README.md)：静态原型选型、假数据、hash 路由、uni-app 迁移、云数据库接入、接口同步与 Bangumi 镜像。
+- [ADR 索引](docs/adr/README.md)：静态原型选型、假数据、hash 路由、uni-app 迁移、云数据库接入、接口同步、Bangumi 镜像与搜索底部浮层。
 - [变更记录](CHANGELOG.md)：按 Keep a Changelog 维护。
 - [工作区规则](.trae/rules/project_rules.md)：目录职责、文档维护、代码与提交规范。
 
@@ -134,7 +135,7 @@ Anime_tracker_assistant/
 - 星期分段标签：7 个「周一…周日」文字标签 + 跟手下划线，按北京时间动态生成当前自然周并默认选中今天；左右滑动下划线实时跟手、松手按距离与速度吸附到相邻一天；点击标签时下划线与内容同步切换
 - 底部胶囊式悬浮 Tab Bar 承载全部 / 番剧 / 国漫筛选与搜索入口
 - 番剧详情（下一集倒计时、信息 / 工作室 / 标签）
-- 搜索（标题、日文名、标签匹配；空态仅显示搜索历史；关键词保留与清空）
+- 搜索浮层：点击底部搜索胶囊后自下而上弹起，背景页保持原尺寸并压暗；支持最近搜索、按标签探索、结果回显与无结果空态，可上下拖拽 / 快速下甩关闭（原型与小程序一致）
 - 标签展开、回到顶部、各种空状态
 - 微信云开发接入：`animeApi` 查询、`animeSync` 同步 AniList 季度番剧 / Bangumi 中文名与评分 / AnimeSchedule 周表，云端不可用时回退本地种子数据
 - 顶栏标题与左侧切换按钮按原生胶囊位置动态对齐；详情页头图背景覆盖状态栏区域

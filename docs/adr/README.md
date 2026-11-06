@@ -58,3 +58,4 @@ ADR（Architecture Decision Record，架构决策记录）用于记录**会影�
 | [0005](0005-cloud-database-integration.md) | 小程序接入微信云开发数据库 | 已接受 | 2026-11-06 |
 | [0006](0006-editorial-api-sync.md) | 接入 AniList / Bangumi / AnimeSchedule 同步 | 已接受 | 2026-11-06 |
 | [0007](0007-bangumi-mirror.md) | Bangumi 改用镜像域名并收紧请求超时 | 已接受 | 2026-11-06 |
+| [0008](0008-search-bottom-sheet.md) | 搜索改为首页内底部浮层 | 已接受 | 2026-11-06 |
