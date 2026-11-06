@@ -3,6 +3,7 @@
   'use strict';
 
   var viewport = document.getElementById('viewport');
+  var device = document.getElementById('device');
   var state = {
     view: 'timeline',
     day: window.TODAY_INDEX || 0,
@@ -19,6 +20,19 @@
     { key: 'anime', label: '番剧', icon: 'broadcast' },
     { key: 'guochuang', label: '国漫', icon: 'globe' }
   ];
+
+  // 搜索浮层：从底部弹起，背景页同步缩小、变圆角并压暗
+  var sheet = {
+    open: false,
+    closing: false,
+    pendingOpen: false,
+    returnTo: 'timeline',
+    domView: '',
+    bgScroll: 0,
+    suppressClickUntil: 0
+  };
+  var sheetDrag = null;
+  var sheetPointer = null;
 
   function esc(v) {
     return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
@@ -330,21 +344,217 @@
       '<div class="search-panel result-panel">' + results.map(searchRow).join('') + '</div>';
   }
 
-  function renderSearch() {
-    return '<div class="page page-search">' +
-      '<header class="search-top">' +
-        '<div class="search-nav">' +
-          '<button class="icon-btn" data-action="back" aria-label="返回">' + icon('i-back') + '</button>' +
-        '</div>' +
-        '<div class="search-field" id="search-field">' +
-          '<span class="search-field-icon">' + icon('i-search') + '</span>' +
-          '<input class="search-input" id="search-input" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="搜索番剧、制作、标签" value="' + esc(state.q) + '" aria-label="搜索番剧">' +
-          '<button class="search-clear" id="search-clear" data-action="clear-search" aria-label="清空搜索"' + (state.q ? '' : ' hidden') + '>' + icon('i-x') + '</button>' +
-        '</div>' +
-      '</header>' +
-      '<main class="search-body" id="search-results">' + searchResultsHTML() + '</main>' +
-      '<div class="page-pad"></div>' +
-    '</div>';
+  /* ---------- 搜索浮层 ---------- */
+  function searchSheetHTML() {
+    return '<div class="sheet-dim" data-action="close-search"></div>' +
+      '<section class="search-sheet" id="search-sheet" role="dialog" aria-modal="true" aria-label="搜索番剧">' +
+        '<div class="sheet-grab-zone" aria-hidden="true"><span class="sheet-grab"></span></div>' +
+        '<header class="search-top">' +
+          '<div class="search-row">' +
+            '<div class="search-field" id="search-field">' +
+              '<span class="search-field-icon">' + icon('i-search') + '</span>' +
+              '<input class="search-input" id="search-input" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="搜索番剧、制作、标签" value="' + esc(state.q) + '" aria-label="搜索番剧">' +
+              '<button class="search-clear" id="search-clear" data-action="clear-search" aria-label="清空搜索"' + (state.q ? '' : ' hidden') + '>' + icon('i-x') + '</button>' +
+            '</div>' +
+            '<button class="sheet-cancel" data-action="close-search" aria-label="关闭搜索">取消</button>' +
+          '</div>' +
+        '</header>' +
+        '<main class="search-body" id="search-results">' + searchResultsHTML() + '</main>' +
+      '</section>';
+  }
+
+  function pageHTML(view) {
+    if (view === 'list') return renderList();
+    if (view === 'grid') return renderGrid();
+    if (view === 'detail') return renderDetail();
+    return renderTimeline();
+  }
+
+  function mountSheet(animate) {
+    if (sheet.open || document.getElementById('sheet-layer')) return;
+    var layer = document.createElement('div');
+    layer.className = 'sheet-layer';
+    layer.id = 'sheet-layer';
+    layer.innerHTML = searchSheetHTML();
+    device.appendChild(layer);
+    viewport.classList.add('is-sheet-lock');
+    sheet.open = true;
+    sheet.closing = false;
+    // overflow 切换可能重置滚动位置，这里恢复背景页原位置
+    viewport.scrollTop = sheet.bgScroll;
+    document.title = '追番助手 · 搜索';
+    if (!animate || prefersReducedMotion()) {
+      layer.classList.add('is-open');
+    } else {
+      // 先让初始态（收起）完成一帧，再加 is-open 触发弹簧过渡
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          layer.classList.add('is-open');
+        });
+      });
+    }
+  }
+
+  function teardownSheet() {
+    var layer = document.getElementById('sheet-layer');
+    if (layer && layer.parentNode) layer.parentNode.removeChild(layer);
+    viewport.classList.remove('is-sheet-lock');
+    viewport.style.transition = '';
+    sheet.open = false;
+    sheet.closing = false;
+    sheet.bgScroll = 0;
+    sheetDrag = null;
+    sheetPointer = null;
+    sheet.suppressClickUntil = 0;
+  }
+
+  function openSearchSheet() {
+    if (sheet.open) return;
+    var from = state.view === 'detail' ? state.returnTo : state.view;
+    if (!DAY_VIEWS[from]) from = 'timeline';
+    sheet.returnTo = from;
+    state.returnTo = from;
+    sheet.bgScroll = viewport.scrollTop;
+    state.q = '';
+    state.tagsOpen = false;
+    if (location.hash === '#/search') {
+      state.view = 'search';
+      mountSheet(true);
+      return;
+    }
+    sheet.pendingOpen = true;
+    location.hash = '#/search';
+  }
+
+  function closeSearchSheet() {
+    if (!sheet.open || sheet.closing) return;
+    sheet.closing = true;
+    var layer = document.getElementById('sheet-layer');
+    var panel = document.getElementById('search-sheet');
+    var dim = layer && layer.querySelector('.sheet-dim');
+    // 清掉拖拽时的行内样式，让 CSS 弹簧过渡接管
+    if (panel) {
+      panel.style.transition = '';
+      panel.style.transform = '';
+    }
+    if (dim) {
+      dim.style.transition = '';
+      dim.style.opacity = '';
+    }
+    if (layer) layer.classList.remove('is-open');
+    sheetDrag = null;
+    sheetPointer = null;
+    window.setTimeout(commitSheetClose, prefersReducedMotion() ? 0 : 540);
+  }
+
+  function commitSheetClose() {
+    var returnTo = sheet.returnTo || 'timeline';
+    var top = sheet.bgScroll;
+    teardownSheet();
+    state.view = returnTo;
+    sheet.domView = returnTo;
+    var hash = '#/' + returnTo;
+    if (location.hash !== hash) location.hash = hash;
+    else sheet.domView = '';
+    viewport.scrollTop = top;
+  }
+
+  function sheetDragStart(y) {
+    var panel = document.getElementById('search-sheet');
+    if (!panel) return;
+    sheetDrag = {
+      startY: y,
+      lastY: y,
+      lastT: performance.now(),
+      offset: 0,
+      velocity: 0,
+      height: panel.offsetHeight
+    };
+    panel.style.transition = 'none';
+    var layer = document.getElementById('sheet-layer');
+    var dim = layer && layer.querySelector('.sheet-dim');
+    if (dim) dim.style.transition = 'none';
+    sheet.suppressClickUntil = 0;
+  }
+
+  function sheetDragMove(y) {
+    var d = sheetDrag;
+    if (!d) return;
+    var dy = y - d.startY;
+    // 往上拖给阻力，最多再抬 72px；往下拖完全跟手
+    var offset = dy >= 0 ? dy : Math.max(-72, dy * 0.3);
+    d.offset = offset;
+    var now = performance.now();
+    var dt = now - d.lastT;
+    if (dt > 0) {
+      d.velocity = d.velocity * 0.6 + ((y - d.lastY) / dt) * 0.4;
+      d.lastY = y;
+      d.lastT = now;
+    }
+
+    var panel = document.getElementById('search-sheet');
+    if (panel) panel.style.transform = 'translateY(' + offset + 'px)';
+    var layer = document.getElementById('sheet-layer');
+    var dim = layer && layer.querySelector('.sheet-dim');
+    // 背景页不缩放，只随下拖进度逐渐恢复亮度
+    var progress = Math.max(0, Math.min(1, offset / d.height));
+    if (dim) dim.style.opacity = String(1 - progress);
+    sheet.suppressClickUntil = performance.now() + 300;
+  }
+
+  function sheetDragEnd() {
+    var d = sheetDrag;
+    sheetDrag = null;
+    if (!d) return;
+    if (Math.abs(d.offset) > 6) sheet.suppressClickUntil = performance.now() + 300;
+    // 下拖超过面板高度 1/3 或快速下甩（> 0.8 px/ms）即关闭，否则弹回原位
+    if (d.offset > d.height / 3 || d.velocity > 0.8) {
+      closeSearchSheet();
+      return;
+    }
+
+    var panel = document.getElementById('search-sheet');
+    var layer = document.getElementById('sheet-layer');
+    var dim = layer && layer.querySelector('.sheet-dim');
+    var ms = prefersReducedMotion() ? 0 : 500;
+    var spring = 'cubic-bezier(0.22, 1.12, 0.36, 1)';
+    if (panel) {
+      panel.style.transition = 'transform ' + ms + 'ms ' + spring;
+      panel.style.transform = 'translateY(0px)';
+    }
+    if (dim) {
+      dim.style.transition = 'opacity ' + ms + 'ms ' + spring;
+      dim.style.opacity = '1';
+    }
+    window.setTimeout(function () {
+      if (panel) {
+        panel.style.transition = '';
+        panel.style.transform = '';
+      }
+      if (dim) {
+        dim.style.transition = '';
+        dim.style.opacity = '';
+      }
+    }, ms + 20);
+  }
+
+  function render() {
+    stopThumbAnim();
+    if (state.view === 'search') {
+      viewport.innerHTML = pageHTML(sheet.returnTo);
+      mountSheet(false);
+      syncDockThumb();
+      return;
+    }
+    if (state.view === 'timeline') viewport.innerHTML = renderTimeline();
+    else if (state.view === 'list') viewport.innerHTML = renderList();
+    else if (state.view === 'grid') viewport.innerHTML = renderGrid();
+    else viewport.innerHTML = renderDetail();
+
+    var a = byId(state.detailId);
+    document.title = state.view === 'detail' && a ? '追番助手 · ' + a.title
+      : '追番助手 · ' + ({ timeline: '番剧时间轴', list: '番剧列表', grid: '番剧网格' })[state.view];
+    syncDockThumb();
   }
 
   function originInfo(a) {
@@ -573,21 +783,6 @@
     animateThumb(thumb, fromGeo || target, target);
   }
 
-  function render() {
-    stopThumbAnim();
-    if (state.view === 'timeline') viewport.innerHTML = renderTimeline();
-    else if (state.view === 'list') viewport.innerHTML = renderList();
-    else if (state.view === 'grid') viewport.innerHTML = renderGrid();
-    else if (state.view === 'search') viewport.innerHTML = renderSearch();
-    else viewport.innerHTML = renderDetail();
-
-    var a = byId(state.detailId);
-    document.title = state.view === 'detail' && a ? '追番助手 · ' + a.title
-      : state.view === 'search' ? '追番助手 · 搜索'
-      : '追番助手 · ' + ({ timeline: '番剧时间轴', list: '番剧列表', grid: '番剧网格' })[state.view];
-    syncDockThumb();
-  }
-
   function renderAndTop() {
     render();
     viewport.scrollTop = 0;
@@ -614,9 +809,15 @@
   }
 
   function navigate(view, opts) {
+    if (view === 'search') {
+      openSearchSheet();
+      return;
+    }
     opts = opts || {};
+    // 从搜索浮层进入详情时先收起浮层，背景页保留到 hash 切换
+    if (sheet.open) teardownSheet();
     var from = state.view;
-    if ((view === 'detail' || view === 'search') && from !== 'detail' && from !== 'search') {
+    if (view === 'detail' && from !== 'detail' && from !== 'search') {
       state.returnTo = from;
     }
     var hash;
@@ -625,7 +826,6 @@
       state.tagsOpen = false;
       hash = '#/detail/' + encodeURIComponent(state.detailId);
     } else {
-      if (view === 'search' && !opts.keepQuery) state.q = '';
       state.view = view;
       hash = '#/' + view;
     }
@@ -638,7 +838,11 @@
   }
 
   function goBack() {
-    if (state.view === 'detail' || state.view === 'search') {
+    if (sheet.open) {
+      closeSearchSheet();
+      return;
+    }
+    if (state.view === 'detail') {
       navigate(state.returnTo || 'timeline', { keepQuery: true });
     } else {
       navigate('timeline');
@@ -662,6 +866,23 @@
 
   window.addEventListener('hashchange', function () {
     applyRoute();
+    // 点击搜索按钮后的首次 hash 变化：直接在当前背景页上挂载浮层
+    if (sheet.pendingOpen && state.view === 'search') {
+      sheet.pendingOpen = false;
+      mountSheet(true);
+      return;
+    }
+    if (sheet.open) {
+      if (state.view === 'search') return;
+      teardownSheet();
+      renderAndTop();
+      return;
+    }
+    // 刚从浮层返回来源页：背景 DOM 已存在，无需重绘，保留滚动位置
+    if (sheet.domView && state.view === sheet.domView) {
+      sheet.domView = '';
+      return;
+    }
     renderAndTop();
   });
 
@@ -669,9 +890,11 @@
     if (!thumbRaf) syncDockThumb();
   });
 
-  viewport.addEventListener('click', function (e) {
+  device.addEventListener('click', function (e) {
     var target = e.target.closest('[data-action]');
-    if (!target || !viewport.contains(target)) return;
+    if (!target || !device.contains(target)) return;
+    // 拖拽结束后紧跟着的 click 不再触发卡片跳转
+    if (performance.now() < sheet.suppressClickUntil) return;
     var action = target.getAttribute('data-action');
     var id = target.getAttribute('data-id');
 
@@ -681,7 +904,9 @@
     } else if (action === 'switch') {
       switchView();
     } else if (action === 'open-search') {
-      navigate('search');
+      openSearchSheet();
+    } else if (action === 'close-search') {
+      closeSearchSheet();
     } else if (action === 'back') {
       goBack();
     } else if (action === 'day') {
@@ -739,28 +964,62 @@
     swipeStart = null;
   }, { passive: true });
 
-  viewport.addEventListener('focusin', function (e) {
+  /* ---------- 搜索浮层拖拽 ---------- */
+  device.addEventListener('pointerdown', function (e) {
+    if (!sheet.open || sheet.closing) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    var t = e.target;
+    var zone = t.closest('.sheet-grab-zone, .search-top');
+    if (!zone) return;
+    // 输入框与按钮区域不接管拖拽，避免抢走聚焦和点击
+    if (t.closest('input, button, .search-field')) return;
+    sheetPointer = e.pointerId;
+    sheetDragStart(e.clientY);
+    if (e.cancelable) e.preventDefault();
+  });
+
+  window.addEventListener('pointermove', function (e) {
+    if (sheetPointer === null || e.pointerId !== sheetPointer) return;
+    sheetDragMove(e.clientY);
+    if (e.cancelable) e.preventDefault();
+  }, { passive: false });
+
+  function endSheetPointer(e) {
+    if (sheetPointer === null || (e && e.pointerId !== sheetPointer)) return;
+    sheetPointer = null;
+    sheetDragEnd();
+  }
+
+  window.addEventListener('pointerup', endSheetPointer);
+  window.addEventListener('pointercancel', endSheetPointer);
+
+  device.addEventListener('focusin', function (e) {
     if (e.target && e.target.id === 'search-input') {
       var field = document.getElementById('search-field');
       if (field) field.classList.add('is-focus');
     }
   });
 
-  viewport.addEventListener('focusout', function (e) {
+  device.addEventListener('focusout', function (e) {
     if (e.target && e.target.id === 'search-input') {
       var field = document.getElementById('search-field');
       if (field) field.classList.remove('is-focus');
     }
   });
 
-  viewport.addEventListener('input', function (e) {
+  device.addEventListener('input', function (e) {
     if (e.target && e.target.id === 'search-input') {
       state.q = e.target.value;
       updateSearchResults();
     }
   });
 
-  viewport.addEventListener('keydown', function (e) {
+  device.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && sheet.open) {
+      e.preventDefault();
+      closeSearchSheet();
+      return;
+    }
     if (e.target && e.target.id === 'search-input') {
       if (e.key === 'Enter') {
         e.preventDefault();

@@ -1,12 +1,15 @@
 <template>
-  <view
-    class="page"
-    :class="pageClass"
-    @touchstart="onTouchStart"
-    @touchmove="onTouchMove"
-    @touchend="onTouchEnd"
-    @touchcancel="onTouchCancel"
-  >
+  <view class="page-shell">
+    <page-meta :page-style="searchOpen ? 'overflow: hidden;' : ''"></page-meta>
+
+    <view
+      class="page"
+      :class="pageClass"
+      @touchstart="onTouchStart"
+      @touchmove="onTouchMove"
+      @touchend="onTouchEnd"
+      @touchcancel="onTouchCancel"
+    >
     <view class="top-bar">
       <view class="app-header" :style="headerPad">
         <view class="header-row" :style="headerRow">
@@ -134,6 +137,9 @@
     </view>
 
     <view class="page-pad"></view>
+    </view>
+
+    <SearchSheet :open="searchOpen" @close="closeSearch" @open-detail="onSheetDetail" />
   </view>
 </template>
 
@@ -141,6 +147,7 @@
   import { computed, getCurrentInstance, nextTick, onMounted, reactive, ref, watch } from 'vue';
   import AppIcon from '../../components/AppIcon.vue';
   import EmptyState from '../../components/EmptyState.vue';
+  import SearchSheet from '../../components/SearchSheet.vue';
   import {
     FILTERS,
     MODES,
@@ -153,6 +160,8 @@
   const mode = computed(() => MODES[state.view] || MODES.timeline);
   const pageClass = computed(() => 'page-' + state.view);
   const items = computed(() => showsForDay(state.day, state.filter));
+  // 搜索浮层：与主页面同处一页，背景页保持原尺寸、仅被遮罩压暗
+  const searchOpen = ref(false);
 
   const groups = computed(() => {
     const result = [];
@@ -365,7 +374,21 @@
   }
 
   function openSearch() {
-    uni.navigateTo({ url: '/pages/search/search' });
+    state.q = '';
+    searchOpen.value = true;
+  }
+
+  function closeSearch() {
+    searchOpen.value = false;
+    setTimeout(() => {
+      if (!searchOpen.value) state.q = '';
+    }, 520);
+  }
+
+  function onSheetDetail(id) {
+    searchOpen.value = false;
+    state.q = '';
+    uni.navigateTo({ url: '/pages/detail/detail?id=' + id });
   }
 
   function openDetail(id) {
