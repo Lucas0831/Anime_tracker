@@ -171,13 +171,16 @@ async function matchOne(doc) {
     await store.updateAnime(doc._id, {
       match_status: 'review',
       match_confidence: best ? best.score : 0,
+      match_attempts: (doc.match_attempts || 0) + 1,
       updated_at: new Date()
     });
     return { status: 'review', confidence: best ? best.score : 0, candidates: candidates.length };
   }
 
-  const subject = await bangumi.getSubject(best.candidate.id);
-  const nameCn = subject.name_cn || best.candidate.name_cn || '';
+  // 搜索结果已包含中文名、简介、评分与总集数，仅在缺中文名时才补一次详情请求
+  const candidate = best.candidate;
+  const subject = candidate.name_cn ? candidate : await bangumi.getSubject(candidate.id);
+  const nameCn = subject.name_cn || candidate.name_cn || '';
   const score = bangumi.bcp47Score(subject);
   const payload = {
     bgm_id: subject.id,
@@ -198,18 +201,27 @@ async function matchOne(doc) {
     payload.ratings = Object.assign({}, doc.ratings || {}, { bangumi: score });
   }
   if (!doc.start_date && subject.date) payload.start_date = subject.date;
-  if (!doc.episodes_total && subject.eps) payload.episodes_total = subject.eps;
+  const totalEps = subject.total_episodes || subject.eps;
+  if (!doc.episodes_total && totalEps) payload.episodes_total = totalEps;
 
   await store.updateAnime(doc._id, payload);
   return { status: 'matched', confidence: best.score, bgm_id: subject.id };
 }
 
 async function syncBangumi(event) {
-  const limit = Math.min(20, Math.max(1, num(event.limit, 5)));
-  const deadline = Date.now() + num(event.timeBudgetMs, 4000);
+  const limit = Math.min(6, Math.max(1, num(event.limit, 2)));
+  const retryReview = event.retryReview === true;
+  const deadline = Date.now() + num(event.timeBudgetMs, 3000);
   const docs = await store.listVisible(1);
-  const pending = docs.filter((d) =>
-    !d.bgm_id && d.match_status !== 'review' && (d.title_native || d.title_cn));
+  const pending = docs.filter((d) => {
+    if (d.bgm_id) return false;
+    if (!(d.title_native || d.title_cn)) return false;
+    if (d.match_status === 'review') {
+      // 人工审核项仅在显式重试时再跑一次
+      return retryReview && (d.match_attempts || 0) < 2;
+    }
+    return true;
+  });
 
   let matched = 0;
   let review = 0;
@@ -217,7 +229,8 @@ async function syncBangumi(event) {
   let processed = 0;
 
   for (let i = 0; i < pending.length && processed < limit; i += 1) {
-    if (Date.now() > deadline) break;
+    // 预留一次搜索 + 写库的时间，避免请求进行中被平台超时强杀
+    if (deadline - Date.now() < 1800) break;
     processed += 1;
     try {
       const result = await matchOne(pending[i]);
@@ -227,7 +240,7 @@ async function syncBangumi(event) {
       failed += 1;
       console.warn('[bangumi] 匹配失败', pending[i]._id, e.message);
     }
-    if (Date.now() < deadline) await sleep(200);
+    if (Date.now() < deadline) await sleep(100);
   }
 
   await store.saveSyncState('bangumi_title_match', {

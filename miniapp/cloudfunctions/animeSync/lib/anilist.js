@@ -45,7 +45,10 @@ query ($from: Int, $to: Int, $page: Int, $perPage: Int) {
 }`;
 
 async function gql(query, variables) {
-  const data = await request('POST', ENDPOINT, { body: { query, variables } });
+  const data = await request('POST', ENDPOINT, {
+    body: { query, variables },
+    timeout: 4000
+  });
   if (data && data.errors && data.errors.length) {
     throw new Error('AniList: ' + data.errors[0].message);
   }
