@@ -766,15 +766,13 @@ image { display: block; }
 .empty-action:active { transform: scale(0.96); }
 
 /* ---------- Detail ---------- */
-.page-detail {
-  padding-top: var(--status-bar-height, 0px);
-}
 /* 详情页底部预留回到顶部按钮的空间，避免最后一行标签被悬浮按钮遮挡 */
 .page-detail .page-pad { height: calc(160rpx + env(safe-area-inset-bottom)); }
 .detail-hero {
   position: relative;
   overflow: hidden;
-  padding: 138.46rpx 38.46rpx 0;
+  /* 状态栏区域也交给 hero 绘制，避免顶部出现一条无背景的白色横带 */
+  padding: calc(var(--status-bar-height, 0px) + 138.46rpx) 38.46rpx 0;
 }
 .hero-blur {
   position: absolute;
@@ -803,7 +801,7 @@ image { display: block; }
 }
 .detail-topbar {
   position: absolute;
-  top: 25rpx;
+  top: calc(var(--status-bar-height, 0px) + 25rpx);
   left: 28.85rpx;
   right: 25rpx;
   z-index: 5;
