@@ -2,7 +2,7 @@
 
 - 状态：已接受
 - 日期：2026-11-05
-- 相关：[DESIGN](../DESIGN.md) §7 数据模型
+- 相关：[IMPLEMENTATION](../IMPLEMENTATION.md#1-数据模型)
 
 ## 背景
 

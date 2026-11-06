@@ -2,7 +2,7 @@
 
 - 状态：已接受
 - 日期：2026-11-05
-- 相关：[PRD](../../初版PRD.md)、[DESIGN](../DESIGN.md)
+- 相关：[PRD](../../初版PRD.md)、[DESIGN](../DESIGN.md)、[IMPLEMENTATION](../IMPLEMENTATION.md)
 
 ## 背景
 

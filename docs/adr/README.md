@@ -1,6 +1,6 @@
 # ADR 索引与规范
 
-ADR（Architecture Decision Record，架构决策记录）用于记录**会影响后续实现方式**的决定：为什么这样做、放弃了什么、代价是什么。产品需求变化写入 PRD，页面与交互细节写入 [DESIGN](../DESIGN.md)，版本变更写入 [CHANGELOG](../../CHANGELOG.md)。
+ADR（Architecture Decision Record，架构决策记录）用于记录**会影响后续实现方式**的决定：为什么这样做、放弃了什么、代价是什么。产品需求变化写入 PRD，全局视觉规范写入 [DESIGN](../DESIGN.md)，页面与交互细节写入 [PAGE_SPEC](../PAGE_SPEC.md)，数据模型与实现写入 [IMPLEMENTATION](../IMPLEMENTATION.md)，版本变更写入 [CHANGELOG](../../CHANGELOG.md)。
 
 ## 何时需要写 ADR
 
@@ -25,7 +25,7 @@ ADR（Architecture Decision Record，架构决策记录）用于记录**会影�
 
 - 状态：提议
 - 日期：YYYY-MM-DD
-- 相关：PRD / DESIGN 链接
+- 相关：PRD / DESIGN / PAGE_SPEC / IMPLEMENTATION 链接
 
 ## 背景
 

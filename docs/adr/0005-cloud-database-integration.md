@@ -2,7 +2,7 @@
 
 - 状态：已接受
 - 日期：2026-11-06
-- 相关：[DESIGN](../DESIGN.md#7-数据模型) / [ADR-0004](0004-uni-app-vue3-miniapp.md)
+- 相关：[IMPLEMENTATION](../IMPLEMENTATION.md#1-数据模型) / [ADR-0004](0004-uni-app-vue3-miniapp.md)
 
 ## 背景
 
